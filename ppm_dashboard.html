@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPM Ops — Prompt Property Management</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0c2340;--navy2:#1a3a5c;
+  --teal:#0aaa7f;--teal2:#e0f7f1;
+  --amber:#d97706;--amber2:#fff8e6;
+  --red:#dc2626;--red2:#fff1f1;
+  --blue:#1d4ed8;--blue2:#eff6ff;
+  --purple:#7c3aed;--purple2:#f5f3ff;
+  --g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;
+  --g400:#94a3b8;--g600:#475569;--g800:#1e293b;
+  --text:#0f172a;--border:#e2e8f0;
+  --font:system-ui,-apple-system,sans-serif;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+}
+body{font-family:var(--font);background:#f0f4f9;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font);cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--navy);height:54px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:32px;height:32px;border-radius:7px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:12px;flex-shrink:0}
+.brand-name{color:#fff;font-size:14px;font-weight:600}
+.brand-sub{color:#5f8aaa;font-size:11px;display:block}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.top-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0}
+.week-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#8db2cc;font-size:11px;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.save-pill{background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.3);color:#fca5a5;font-size:11px;padding:3px 10px;border-radius:20px;white-space:nowrap;display:none}
+.btn-sm{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#c8dcea;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;display:none;align-items:center;gap:5px;white-space:nowrap}
+.btn-sm:hover{background:rgba(255,255,255,.15)}
+.btn-sm-icon{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ── WRAP ── */
+.wrap{padding:20px 24px 60px;max-width:1400px;margin:0 auto}
+
+/* ── LANDING ── */
+.landing{background:#fff;border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow-md)}
+.lhero{background:linear-gradient(160deg,#0c2340 0%,#1a3a5c 100%);padding:36px 40px;text-align:center}
+.lhero-logo{width:52px;height:52px;border-radius:12px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin:0 auto 14px;letter-spacing:-1px}
+.lhero h2{color:#fff;font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px}
+.lhero p{color:#8db2cc;font-size:13px;max-width:460px;margin:0 auto;line-height:1.6}
+.lbody{padding:24px 32px 28px}
+.lstep{display:flex;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+.lstep-bar{width:80px;min-width:80px;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;gap:6px}
+.lstep-bar.step2{background:var(--navy2)}
+.lstep-num{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.lstep-num.green{background:var(--teal)}
+.lstep-num.amber{background:var(--amber)}
+.lstep-num.blue{background:var(--blue)}
+.lstep-num.gray{background:#475569}
+.lstep-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5f8aaa}
+.lstep-main{flex:1;padding:18px 22px;background:#fff}
+.lstep-title{font-size:14px;font-weight:700;color:var(--g800);margin-bottom:4px}
+.lstep-desc{font-size:12px;color:var(--g600);line-height:1.6;margin-bottom:14px}
+
+/* Backup states */
+.bstate{display:none}
+.bstate.active{display:block}
+.bzone{border:2px dashed var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .18s;background:var(--g50)}
+.bzone:hover,.bzone.drag{border-color:var(--teal);background:var(--teal2)}
+.bzone-icon{width:38px;height:38px;border-radius:8px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bzone-icon svg{width:18px;height:18px;stroke:var(--g400);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.bzone:hover .bzone-icon svg{stroke:var(--teal)}
+.bzone-text{flex:1;min-width:0}
+.bzone-text strong{display:block;font-size:13px;color:var(--g800);margin-bottom:2px}
+.bzone-text span{font-size:11px;color:var(--g400);line-height:1.5}
+.bzone-text span code{background:var(--g100);padding:1px 4px;border-radius:3px;font-size:10px}
+.bzone-text span a{color:var(--teal);font-weight:500}
+.bzone-btn{background:var(--navy);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.bzone-btn:hover{background:var(--navy2)}
+.skip-link{display:block;text-align:right;margin-top:7px;font-size:11px;color:var(--g400);background:none;border:none;cursor:pointer;text-decoration:underline}
+.bstatus{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:500}
+.bstatus.green{background:#d1fae5;color:#065f46}
+.bstatus.amber{background:var(--amber2);color:#92400e}
+.bstatus.blue{background:var(--blue2);color:var(--blue)}
+.bstatus-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:700}
+.bstatus.green .bstatus-dot{background:var(--teal);color:#fff}
+.bstatus.amber .bstatus-dot{background:var(--amber);color:#fff}
+.bstatus.blue .bstatus-dot{background:var(--blue);color:#fff}
+.bstatus-link{margin-left:auto;font-size:11px;font-weight:400;background:none;border:none;cursor:pointer;text-decoration:underline;white-space:nowrap}
+.bstatus.green .bstatus-link{color:#065f46}
+.bstatus.amber .bstatus-link{color:#92400e}
+
+/* Chips */
+.chips-gate{background:var(--g100);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;text-align:center;font-size:12px;color:var(--g600);display:none}
+.chips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.chip{border:1.5px solid var(--border);border-radius:var(--r);background:#fff;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;text-align:left}
+.chip:hover{border-color:var(--teal);background:var(--teal2);transform:translateY(-1px);box-shadow:0 2px 8px rgba(10,170,127,.12)}
+.chip.loaded{border-color:var(--teal);background:var(--teal2)}
+.chip-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.chip-label{font-size:12px;font-weight:600;color:var(--g800);display:block;margin-bottom:1px}
+.chip-sub{font-size:10px;color:var(--g400);display:block}
+.chip.loaded .chip-sub{color:#065f46}
+
+/* Footer */
+.lfooter{padding:12px 32px;background:var(--g50);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lfooter-note{font-size:11px;color:var(--g400);display:flex;align-items:center;gap:5px}
+.lfooter-link{font-size:11px;color:var(--teal);font-weight:500;display:flex;align-items:center;gap:4px}
+.lfooter-link:hover{text-decoration:underline}
+
+/* ── SUMMARY ── */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:#fff;border-radius:var(--r);padding:13px 15px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.ct::before{background:var(--teal)}.sc.ca::before{background:var(--amber)}
+.sc.cr::before{background:var(--red)}.sc.cb::before{background:var(--blue)}
+.sc.cp::before{background:var(--purple)}.sc.cs::before{background:#64748b}
+.sc-lbl{font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-weight:600}
+.sc-val{font-size:24px;font-weight:700;line-height:1;margin-bottom:2px}
+.sc-sub{font-size:11px;color:var(--g400)}
+.ct .sc-val{color:var(--teal)}.ca .sc-val{color:var(--amber)}
+.cr .sc-val{color:var(--red)}.cb .sc-val{color:var(--blue)}
+.cp .sc-val{color:var(--purple)}.cs .sc-val{color:#64748b}
+
+/* ── ACTION BAR ── */
+.abar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.abar-left{display:flex;gap:8px;flex:1;flex-wrap:wrap}
+.abar-right{display:flex;gap:8px;flex-shrink:0}
+.abtn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r);font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--g800);cursor:pointer;white-space:nowrap;transition:all .15s}
+.abtn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal2)}
+.abtn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.abtn.primary:hover{background:var(--navy2);border-color:var(--navy2)}
+.abtn.amber{background:var(--amber2);color:var(--amber);border-color:#fde68a}
+.abtn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ── TABNAV ── */
+.tabnav{display:flex;gap:2px;background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:4px;margin-bottom:16px;overflow-x:auto;box-shadow:var(--shadow)}
+.tabnav::-webkit-scrollbar{height:0}
+.tbtn{white-space:nowrap;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--g600);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.tbtn:hover{background:var(--g100);color:var(--g800)}
+.tbtn.active{background:var(--navy);color:#fff}
+.tbtn .cnt{font-size:10px;opacity:.6}
+
+/* ── SECTIONS ── */
+.sec{background:#fff;border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.sec-head{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--g50)}
+.sec-title{font-size:13px;font-weight:700;color:var(--g800)}
+.sec-count{font-size:11px;background:var(--g200);color:var(--g600);padding:2px 8px;border-radius:10px;font-weight:600}
+.sec-head.alert{background:var(--red2);border-bottom-color:#fecaca}
+.sec-head.alert .sec-title{color:var(--red)}
+.sec-head.alert .sec-count{background:var(--red);color:#fff}
+.sec-head.warn{background:var(--amber2);border-bottom-color:#fde68a}
+.sec-head.warn .sec-title{color:var(--amber)}
+.fbar{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--g50)}
+.fbar-ic{color:var(--g400);font-size:13px;flex-shrink:0}
+.finp{flex:1;font-size:12px;padding:4px 0;border:none;background:transparent;outline:none;color:var(--text)}
+.finp::placeholder{color:var(--g400)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--g50);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--g200);vertical-align:middle;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr.cr{cursor:pointer}
+tr.cr:hover td{background:var(--teal2)}
+
+/* ── BADGES ── */
+.b{display:inline-flex;align-items:center;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.b-green{background:#d1fae5;color:#065f46}.b-amber{background:#fef3c7;color:#92400e}
+.b-red{background:#fee2e2;color:#991b1b}.b-blue{background:#dbeafe;color:#1e40af}
+.b-purple{background:#ede9fe;color:#5b21b6}.b-gray{background:var(--g100);color:var(--g600)}
+.b-teal{background:var(--teal2);color:#065f46}
+.ok{color:var(--teal);font-weight:600}.warn{color:var(--amber);font-weight:600}.danger{color:var(--red);font-weight:600}
+
+/* ── REMARKS ── */
+.rm-inp{width:100%;min-width:140px;font-size:11px;padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-family:var(--font);outline:none;background:#fff;color:var(--text)}
+.rm-inp:focus{border-color:var(--teal);background:var(--teal2)}
+.rm-inp.has{border-color:var(--amber);background:var(--amber2)}
+
+/* ── DRAWER ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200}
+.ov.open{display:block}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:460px;background:#fff;z-index:201;overflow-y:auto;box-shadow:-6px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .22s ease}
+.drawer.open{transform:none}
+.dh{background:var(--navy);padding:14px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:1}
+.dh-tag{color:#5f8aaa;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:2px}
+.dh h2{color:#fff;font-size:14px;font-weight:700;line-height:1.35}
+.dh-x{background:rgba(255,255,255,.1);border:none;color:#8db2cc;font-size:18px;cursor:pointer;border-radius:5px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dh-x:hover{background:rgba(255,255,255,.2);color:#fff}
+.db{padding:18px}
+.df{margin-bottom:12px}
+.df-l{font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
+.df-v{font-size:13px;color:var(--text);line-height:1.5}
+.df-v.note{background:var(--g50);border-left:3px solid var(--teal);padding:7px 10px;border-radius:0 5px 5px 0;font-size:12px}
+.df-v.alert{background:var(--red2);border-left:3px solid var(--red);padding:7px 10px;border-radius:0 5px 5px 0;font-size:12px}
+hr.dv{border:none;border-top:1px solid var(--border);margin:14px 0}
+.nstack{display:flex;flex-direction:column;gap:5px;margin-top:5px}
+.ni{background:var(--amber2);border-left:3px solid var(--amber);padding:7px 9px;border-radius:0 5px 5px 0;font-size:12px;line-height:1.5}
+.ni.red{background:var(--red2);border-left-color:var(--red)}.ni.teal{background:var(--teal2);border-left-color:var(--teal)}
+.dr-rm textarea{width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:var(--font);outline:none;resize:vertical;min-height:72px;color:var(--text)}
+.dr-rm textarea:focus{border-color:var(--teal)}
+.dr-rm-btn{margin-top:6px;background:var(--teal);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.dr-rm-btn:hover{background:#089068}
+
+/* ── REPORT MODAL ── */
+.rmov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;align-items:center;justify-content:center}
+.rmov.open{display:flex}
+.rmodal{background:#fff;border-radius:var(--rxl);width:660px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,.18)}
+.rmodal-head{background:var(--navy);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--rxl) var(--rxl) 0 0}
+.rmodal-head h2{color:#fff;font-size:14px;font-weight:700}
+.rmodal-x{background:rgba(255,255,255,.1);border:none;color:#8db2cc;font-size:18px;cursor:pointer;border-radius:5px;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.rmodal-body{flex:1;overflow-y:auto;padding:18px}
+.rmodal-text{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;font-family:var(--font)}
+.rmodal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--g50);border-radius:0 0 var(--rxl) var(--rxl)}
+
+/* ── UPLOAD MODAL ── */
+.umov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;align-items:center;justify-content:center}
+.umov.open{display:flex}
+.umodal{background:#fff;border-radius:var(--rxl);padding:24px;width:520px;max-width:94vw;box-shadow:0 20px 40px rgba(0,0,0,.18)}
+.umodal h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.umodal p{font-size:13px;color:var(--g600);margin-bottom:18px}
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.uc{border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:all .15s}
+.uc:hover,.uc.sel{border-color:var(--teal);background:var(--teal2)}
+.uc h4{font-size:12px;font-weight:700;color:var(--g800);margin-bottom:1px}
+.uc p{font-size:11px;color:var(--g600);margin:0}
+.uc.sel h4{color:#065f46}
+.ufoot{display:flex;gap:8px;justify-content:flex-end}
+.btn-p{background:var(--navy);color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-p:hover{background:var(--navy2)}
+.btn-s{background:#fff;color:var(--g800);border:1.5px solid var(--border);padding:8px 18px;border-radius:7px;font-size:13px;cursor:pointer}
+.btn-s:hover{background:var(--g100)}
+
+/* ── MISC ── */
+.wc{display:flex;align-items:center;gap:14px;padding:8px 14px;background:#f0fdf8;border-bottom:1px solid #bbf7d0;font-size:11px;color:#166534;flex-wrap:wrap}
+.wc strong{font-weight:600}
+.totals{display:flex;gap:16px;padding:9px 16px;background:var(--g50);border-top:1px solid var(--border);font-size:12px;color:var(--g600);flex-wrap:wrap}
+.totals strong{color:var(--g800);font-weight:700}
+.empty{text-align:center;padding:40px 20px;color:var(--g600)}
+.empty-ic{font-size:32px;margin-bottom:8px;opacity:.3}
+.empty h3{font-size:14px;font-weight:600;margin-bottom:3px;color:var(--g800)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.arr{color:var(--g300);font-size:15px;text-align:center}
+
+@media(max-width:680px){.wrap{padding:10px 10px 40px}.drawer{width:100%}.summary{grid-template-columns:repeat(2,1fr)}.ugrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">PPM</div>
+    <div>
+      <div class="brand-name">Prompt Property Management</div>
+      <span class="brand-sub">Operations &amp; Data Dashboard</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="top-dot"></div>
+    <span class="week-pill" id="weekPill">No data loaded</span>
+    <span class="save-pill" id="savePill">Unsaved changes</span>
+    <button class="btn-sm" id="addMoreBtn" onclick="openUModal()">
+      <svg class="btn-sm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Add CSV
+    </button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="landing" id="landing">
+    <div class="lhero">
+      <div class="lhero-logo">PPM</div>
+      <h2>Weekly Operations Dashboard</h2>
+      <p>Your central hub for Prompt Property Management data. Follow two steps each week to keep your team aligned and every record up to date.</p>
+    </div>
+    <div class="lbody">
+
+      <!-- STEP 1 -->
+      <div class="lstep">
+        <div class="lstep-bar">
+          <div class="lstep-num gray" id="s1num">1</div>
+          <div class="lstep-tag">Backup</div>
+        </div>
+        <div class="lstep-main">
+          <div class="lstep-title" id="s1title">Load last week's backup</div>
+          <div class="lstep-desc" id="s1desc">Upload the JSON file saved to SharePoint last week. All team remarks carry forward to this week's records automatically.</div>
+
+          <div class="bstate" id="bs-first">
+            <div class="bstatus blue">
+              <div class="bstatus-dot">i</div>
+              <div><strong>First time setup</strong> — no backup exists yet. Complete this week, save to SharePoint, and from next week this step becomes required.</div>
+            </div>
+          </div>
+
+          <div class="bstate" id="bs-required">
+            <div class="bzone" id="bzone" onclick="triggerBackup()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropBackup(event)">
+              <input type="file" id="bfile" accept=".json" style="display:none" onchange="loadBackupFile(event)">
+              <div class="bzone-icon">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </div>
+              <div class="bzone-text">
+                <strong>Drop your backup file here or click Browse</strong>
+                <span>File: <code>PPM_Weekly_Report_YYYY-MM-DD.json</code> &nbsp;—&nbsp; <a href="https://promptmortgagecompanycom.sharepoint.com/:f:/s/PromptPropertyManagement/IgBEHvM9smpuQL7ifYfSBmdGAc2l4l-b-ix_pazvGsJ-478?e=Pmemo2" target="_blank" onclick="event.stopPropagation()">Open SharePoint folder &#8599;</a></span>
+              </div>
+              <button class="bzone-btn" onclick="event.stopPropagation();triggerBackup()">Browse file</button>
+            </div>
+            <button class="skip-link" onclick="skipBackup()">I don't have the backup file this week — skip</button>
+          </div>
+
+          <div class="bstate" id="bs-loaded">
+            <div class="bstatus green">
+              <div class="bstatus-dot">&#10003;</div>
+              <span id="bloadedMsg">Backup loaded</span>
+              <button class="bstatus-link" onclick="clearBackup()">Load different file</button>
+            </div>
+          </div>
+
+          <div class="bstate" id="bs-skipped">
+            <div class="bstatus amber">
+              <div class="bstatus-dot">!</div>
+              <span>Step skipped — last week's remarks will not carry forward</span>
+              <button class="bstatus-link" onclick="unskipBackup()">Undo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="lstep">
+        <div class="lstep-bar step2">
+          <div class="lstep-num" style="background:rgba(255,255,255,.15)">2</div>
+          <div class="lstep-tag">Upload</div>
+        </div>
+        <div class="lstep-main">
+          <div class="lstep-title">Upload this week's Buildium exports</div>
+          <div class="lstep-desc">Click any report below to upload its CSV file. Each tab activates instantly as its file loads. Upload as many or as few as your role requires.</div>
+          <div class="chips-gate" id="chipsGate">Complete Step 1 above before uploading this week's data</div>
+          <div class="chips-grid" id="chips"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="lfooter">
+      <div class="lfooter-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Files stay in your browser only — nothing sent to any server
+      </div>
+      <a href="https://promptmortgagecompanycom.sharepoint.com/:f:/s/PromptPropertyManagement/IgBEHvM9smpuQL7ifYfSBmdGAc2l4l-b-ix_pazvGsJ-478?e=Pmemo2" target="_blank" class="lfooter-link">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Open SharePoint backup folder &#8599;
+      </a>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" style="display:none">
+    <div class="summary" id="summary"></div>
+    <div class="abar">
+      <div class="abar-left">
+        <button class="abtn amber" onclick="openReport('owner')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Owner summary
+        </button>
+        <button class="abtn" onclick="openReport('management')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Management report
+        </button>
+        <button class="abtn" onclick="openReport('team')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Team briefing
+        </button>
+        <button class="abtn" onclick="dlExcel()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Export Excel
+        </button>
+      </div>
+      <div class="abar-right">
+        <button class="abtn primary" onclick="saveToSharePoint()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Save to SharePoint
+        </button>
+      </div>
+    </div>
+    <div class="tabnav" id="tabnav"></div>
+    <div id="panels"></div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="ov" id="ov" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dh">
+    <div><div class="dh-tag" id="dTag">Detail</div><h2 id="dTitle"></h2></div>
+    <button class="dh-x" onclick="closeDrawer()">&#215;</button>
+  </div>
+  <div class="db" id="dBody"></div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="rmov" id="rmov">
+  <div class="rmodal">
+    <div class="rmodal-head">
+      <h2 id="rTitle">Report</h2>
+      <button class="rmodal-x" onclick="closeReport()">&#215;</button>
+    </div>
+    <div class="rmodal-body"><div class="rmodal-text" id="rText"></div></div>
+    <div class="rmodal-foot">
+      <button class="btn-s" onclick="closeReport()">Close</button>
+      <button class="btn-p" onclick="copyReport()">Copy</button>
+      <button class="btn-p" onclick="dlReport()">Download .txt</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="umov" id="umov">
+  <div class="umodal">
+    <h2>Upload CSV</h2>
+    <p>Select the report type then choose your file.</p>
+    <div class="ugrid" id="ugrid"></div>
+    <input type="file" id="ufile" accept=".csv" style="display:none" onchange="handleUFile(event)">
+    <div class="ufoot">
+      <button class="btn-s" onclick="closeUModal()">Cancel</button>
+      <button class="btn-p" onclick="document.getElementById('ufile').click()">Choose file</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TABS=[
+  {key:'leases',    label:'Leases',      sub:'Lease register',    icon:'📋'},
+  {key:'vacancies', label:'Vacancies',   sub:'Vacant units',      icon:'🏠'},
+  {key:'movein',    label:'Move Ins',    sub:'Upcoming move-ins', icon:'🔑'},
+  {key:'moveout',   label:'Move Outs',   sub:'Scheduled exits',   icon:'📦'},
+  {key:'balances',  label:'Collections', sub:'Outstanding rent',  icon:'💰'},
+  {key:'tasks',     label:'Work Orders', sub:'Tasks & bills',     icon:'🔧'},
+  {key:'tenants',   label:'Tenants',     sub:'All tenants',       icon:'👥'},
+  {key:'properties',label:'Properties',  sub:'Property register', icon:'🏢'},
+  {key:'owners',    label:'Owners',      sub:'Rental owners',     icon:'👤'},
+  {key:'applicants',label:'Applicants',  sub:'Applications',      icon:'📝'},
+];
+
+const S={data:{},prev:{},remarks:{},loaded:new Set(),activeTab:null,uKey:'leases'};
+const _R={};
+let rText='',rType='';
+let unsaved=false;
+
+// ── LOCAL STORAGE ──
+const LS='ppm_backup_exists';
+const isFirst=()=>!localStorage.getItem(LS);
+const markSavedLS=(w)=>{localStorage.setItem(LS,'1');localStorage.setItem('ppm_last_week',w);};
+
+// ── TAB CLOSE WARNING ──
+window.addEventListener('beforeunload',e=>{if(unsaved){e.preventDefault();e.returnValue='You have unsaved data. Save to SharePoint first.';}});
+
+function markUnsaved(){unsaved=true;document.getElementById('savePill').style.display='block';}
+function markSaved(){unsaved=false;document.getElementById('savePill').style.display='none';}
+
+// ── BACKUP STATE MACHINE ──
+let bstate='';
+
+function initBackup(){setBState(isFirst()?'first':'required');}
+
+function setBState(s){
+  bstate=s;
+  ['first','required','loaded','skipped'].forEach(id=>{
+    document.getElementById('bs-'+id).classList.remove('active');
+  });
+  document.getElementById('bs-'+s).classList.add('active');
+  const n=document.getElementById('s1num');
+  const t=document.getElementById('s1title');
+  if(s==='first'){n.className='lstep-num blue';t.textContent="Load last week's backup";unlockStep2();}
+  else if(s==='required'){n.className='lstep-num';n.style.background='var(--red)';t.textContent="Load last week's backup — required";lockStep2();}
+  else if(s==='loaded'){n.className='lstep-num green';t.textContent="Last week's backup loaded";unlockStep2();}
+  else if(s==='skipped'){n.className='lstep-num amber';t.textContent="Step 1 skipped";unlockStep2();}
+}
+
+function lockStep2(){
+  document.getElementById('chipsGate').style.display='block';
+  document.getElementById('chips').style.display='none';
+}
+function unlockStep2(){
+  document.getElementById('chipsGate').style.display='none';
+  document.getElementById('chips').style.display='grid';
+}
+
+function triggerBackup(){document.getElementById('bfile').click();}
+function dropBackup(e){e.preventDefault();document.getElementById('bzone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processBackup(f);}
+function loadBackupFile(e){const f=e.target.files[0];if(f)processBackup(f);}
+
+function processBackup(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.remarks){
+        S.remarks={...d.remarks};
+        const n=Object.keys(S.remarks).length;
+        document.getElementById('bloadedMsg').textContent=n+' remark'+(n!==1?'s':'')+' restored from '+(d.week||'previous week');
+        setBState('loaded');
+        if(S.loaded.size)renderAll();
+        toast(n+' remarks loaded');
+      } else {toast('No remarks found in this file');}
+    }catch{toast('Could not read backup — check it is a PPM JSON file');}
+  };
+  r.readAsText(file);
+}
+
+function clearBackup(){S.remarks={};document.getElementById('bfile').value='';setBState(isFirst()?'first':'required');if(S.loaded.size)renderSummary();}
+function skipBackup(){if(!confirm("Remarks from last week will not carry forward.\n\nContinue without loading backup?"))return;setBState('skipped');}
+function unskipBackup(){setBState(isFirst()?'first':'required');}
+
+// ── CSV UPLOAD ──
+function quickUpload(key){S.uKey=key;const i=document.createElement('input');i.type='file';i.accept='.csv';i.onchange=e=>processCSV(e.target.files[0],key);i.click();}
+function openUModal(){renderUGrid();document.getElementById('umov').classList.add('open');}
+function closeUModal(){document.getElementById('umov').classList.remove('open');}
+function handleUFile(e){processCSV(e.target.files[0],S.uKey);closeUModal();}
+function renderUGrid(){document.getElementById('ugrid').innerHTML=TABS.map(t=>`<div class="uc ${S.uKey===t.key?'sel':''}" onclick="S.uKey='${t.key}';document.querySelectorAll('.uc').forEach(u=>u.classList.remove('sel'));this.classList.add('sel')"><h4>${t.label}</h4><p>${t.sub}</p></div>`).join('');}
+
+function processCSV(file,key){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    if(S.data[key]&&S.data[key].length)S.prev[key]=S.data[key];
+    S.data[key]=rows;
+    S.loaded.add(key);
+    if(!S.activeTab)S.activeTab=key;
+    document.getElementById('weekPill').textContent='Week of '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('landing').style.display='none';
+    document.getElementById('dash').style.display='block';
+    document.getElementById('addMoreBtn').style.display='flex';
+    renderChips();renderAll();markUnsaved();
+    toast(TABS.find(t=>t.key===key)?.label+' loaded — '+rows.length+' records');
+  };
+  r.readAsText(file);
+}
+
+function parseCSV(t){
+  const lines=t.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const heads=spl(lines[0]);
+  return lines.slice(1).map(l=>{const v=spl(l);const row={};heads.forEach((h,i)=>row[h.trim()]=(v[i]||'').trim());return row;}).filter(r=>Object.values(r).some(v=>v));
+}
+function spl(line){const res=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){q=!q;continue;}if(ch===','&&!q){res.push(c);c='';continue;}c+=ch;}res.push(c);return res;}
+
+// ── RENDER ──
+function renderAll(){renderSummary();renderTabNav();renderActive();}
+
+function renderChips(){
+  document.getElementById('chips').innerHTML=TABS.map(t=>{
+    const ld=S.loaded.has(t.key);
+    return`<button class="chip ${ld?'loaded':''}" onclick="quickUpload('${t.key}')">
+      <div class="chip-icon">${t.icon}</div>
+      <div><span class="chip-label">${t.label}</span><span class="chip-sub">${ld?'✓ Loaded':'Click to upload'}</span></div>
+    </button>`;
+  }).join('');
+}
+
+function renderSummary(){
+  const L=S.data.leases||[],V=S.data.vacancies||[],B=S.data.balances||[],MO=S.data.moveout||[],T=S.data.tasks||[],MI=S.data.movein||[];
+  const today=new Date();
+  const active=L.filter(l=>l.Status==='Active').length;
+  const future=L.filter(l=>l.Status==='Future').length;
+  const rent=L.filter(l=>l.Status==='Active').reduce((s,l)=>s+(parseFloat(l.Rent)||0),0);
+  const unlisted=V.filter(v=>v['Listed date']==='Unlisted').length;
+  const totalBal=B.reduce((s,b)=>s+(parseFloat(b.Balance)||0),0);
+  const over90=B.reduce((s,b)=>s+(parseFloat(b['90+ days'])||0),0);
+  const urgOut=MO.filter(r=>parseFloat(r['Days left'])<=30).length;
+  const odT=T.filter(t=>t.Status!=='Completed'&&t['Due date']&&new Date(t['Due date'])<today).length;
+  const remarks=Object.keys(S.remarks).length;
+  document.getElementById('summary').innerHTML=`
+    <div class="sc ct"><div class="sc-lbl">Active leases</div><div class="sc-val">${active}</div><div class="sc-sub">${future} future</div></div>
+    <div class="sc ca"><div class="sc-lbl">Vacant units</div><div class="sc-val">${unlisted}</div><div class="sc-sub">unlisted</div></div>
+    <div class="sc cb"><div class="sc-lbl">Monthly rent</div><div class="sc-val" style="font-size:18px">$${Math.round(rent).toLocaleString()}</div><div class="sc-sub">active leases</div></div>
+    <div class="sc cr"><div class="sc-lbl">Outstanding</div><div class="sc-val" style="font-size:18px">$${Math.round(totalBal).toLocaleString()}</div><div class="sc-sub">$${Math.round(over90).toLocaleString()} 90+ days</div></div>
+    <div class="sc ca"><div class="sc-lbl">Move-outs &le;30d</div><div class="sc-val">${urgOut}</div><div class="sc-sub">need action</div></div>
+    <div class="sc cp"><div class="sc-lbl">Move-ins due</div><div class="sc-val">${MI.length}</div><div class="sc-sub">activating soon</div></div>
+    <div class="sc cs"><div class="sc-lbl">Team remarks</div><div class="sc-val">${remarks}</div><div class="sc-sub">notes this week</div></div>`;
+}
+
+function renderTabNav(){
+  document.getElementById('tabnav').innerHTML=TABS.filter(t=>S.loaded.has(t.key)).map(t=>
+    `<button class="tbtn ${S.activeTab===t.key?'active':''}" onclick="switchTab('${t.key}')">${t.label}<span class="cnt">${(S.data[t.key]||[]).length}</span></button>`
+  ).join('');
+}
+function switchTab(k){S.activeTab=k;renderTabNav();renderActive();}
+function renderActive(){
+  const c=document.getElementById('panels');c.innerHTML='';
+  const k=S.activeTab,rows=S.data[k]||[],prev=S.prev[k]||[];
+  if(!rows.length){c.innerHTML='<div class="sec"><div class="empty"><div class="empty-ic">📂</div><h3>No data</h3><p>Upload the CSV to see this panel</p></div></div>';return;}
+  ({leases:pLeases,vacancies:pVac,movein:pMoveIn,moveout:pMoveOut,balances:pBal,tasks:pTasks,tenants:pTenants,properties:pProps,owners:pOwners,applicants:pApps})[k]?.(c,rows,prev);
+}
+
+// ── REMARK HELPERS ──
+function rkey(tab,row){for(const k of['Unit','Property','Account number','TaskId','Id','ApplicantName','Property name']){if(row[k])return tab+'::'+row[k];}return tab+'::'+JSON.stringify(row).slice(0,60);}
+function getRm(tab,row){return S.remarks[rkey(tab,row)]||'';}
+function setRm(tab,row,v){const k=rkey(tab,row);if(v.trim())S.remarks[k]=v.trim();else delete S.remarks[k];markUnsaved();renderSummary();}
+
+function rmCol(tab){
+  return{l:'Remarks',k:'__rm',w:'17%',r:(v,row)=>{
+    const ex=getRm(tab,row);
+    const id='r'+Math.random().toString(36).slice(2,7);
+    setTimeout(()=>{const el=document.getElementById(id);if(el){el.value=ex;if(ex)el.classList.add('has');el.addEventListener('blur',()=>{setRm(tab,row,el.value);el.classList.toggle('has',!!el.value.trim());toast('Remark saved');});el.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}});}},30);
+    return`<input id="${id}" class="rm-inp" placeholder="Add note...">`;
+  }};
+}
+function drRm(tab,row){
+  const ex=getRm(tab,row);
+  const id='dr'+Math.random().toString(36).slice(2,7);
+  setTimeout(()=>{const el=document.getElementById(id);if(el){el.value=ex;el._t=tab;el._r=row;}},30);
+  return`<hr class="dv"><div class="df"><div class="df-l">Team remark</div><div class="dr-rm"><textarea id="${id}" placeholder="Add a note — saved to weekly backup and carried forward next week..."></textarea><button class="dr-rm-btn" onclick="savedrRm('${id}')">Save remark</button></div></div>`;
+}
+function savedrRm(id){const el=document.getElementById(id);if(!el)return;setRm(el._t,el._r,el.value);toast('Remark saved');}
+
+// ── TABLE BUILDER ──
+function tbl(rows,cols,id,onRow){
+  if(!rows.length)return'<div class="empty"><div class="empty-ic">📋</div><h3>No records</h3></div>';
+  _R[id]={rows,onRow};
+  const th='<thead><tr>'+cols.map(c=>`<th style="width:${c.w||'auto'}">${c.l}</th>`).join('')+'<th style="width:26px"></th></tr></thead>';
+  const tb='<tbody id="tb-'+id+'">'+rows.map((r,i)=>
+    `<tr class="cr" onclick="if(!['INPUT','TEXTAREA'].includes(event.target.tagName))_rc('${id}',${i})">`+
+    cols.map(col=>{let v=r[col.k]||'';if(col.r)v=col.r(v,r);return`<td>${v}</td>`;}).join('')+
+    `<td class="arr">›</td></tr>`
+  ).join('')+'</tbody>';
+  return`<div class="fbar"><span class="fbar-ic">⌕</span><input class="finp" placeholder="Filter..." oninput="filt('tb-${id}',this.value)"></div><div class="tbl-wrap"><table>${th}${tb}</table></div>`;
+}
+function _rc(id,i){const d=_R[id];if(d&&d.rows[i]&&d.onRow)d.onRow(d.rows[i]);}
+function filt(id,q){const tb=document.getElementById(id);if(!tb)return;const lq=q.toLowerCase();tb.querySelectorAll('tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(lq)?'':'none';});}
+function secH(title,count,content,type=''){return`<div class="sec"><div class="sec-head ${type}"><span class="sec-title">${title}</span><span class="sec-count">${count}</span></div>${content}</div>`;}
+function wcBar(rows,prev,key){if(!prev||!prev.length)return'';const pi=new Set(prev.map(r=>r[key]));const nw=rows.filter(r=>!pi.has(r[key])).length;const rm=prev.filter(r=>!new Set(rows.map(x=>x[key])).has(r[key])).length;return`<div class="sec" style="margin-bottom:12px"><div class="wc"><strong>Week-over-week:</strong> +${nw} new &nbsp; ${rm} removed &nbsp; ${rows.length} total</div></div>`;}
+function bd(t,tx){const m={green:'b-green',amber:'b-amber',red:'b-red',blue:'b-blue',purple:'b-purple',gray:'b-gray',teal:'b-teal'};return`<span class="b ${m[t]||'b-gray'}">${tx}</span>`;}
+function df(l,v,cls){if(!v||v==='undefined'||v==='')return'';return`<div class="df"><div class="df-l">${l}</div><div class="df-v ${cls||''}">${v}</div></div>`;}
+function show(tag,title,body){document.getElementById('dTag').textContent=tag;document.getElementById('dTitle').textContent=title;document.getElementById('dBody').innerHTML=body;document.getElementById('ov').classList.add('open');document.getElementById('drawer').classList.add('open');}
+function closeDrawer(){document.getElementById('ov').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ── PANELS ──
+function pLeases(c,rows,prev){
+  const today=new Date();
+  const active=rows.filter(r=>r.Status==='Active');
+  const future=rows.filter(r=>r.Status==='Future');
+  const exp90=active.filter(r=>{const e=r['End date']?new Date(r['End date']):null;if(!e)return false;const d=(e-today)/86400000;return d>=0&&d<=90;});
+  const totalRent=active.reduce((s,r)=>s+(parseFloat(r.Rent)||0),0);
+  const cols=[
+    {l:'Tenant',k:'Tenants',w:'24%'},{l:'Unit',k:'Unit',w:'22%'},
+    {l:'Rent',k:'Rent',w:'9%',r:v=>v?'$'+parseFloat(v).toFixed(0):''},
+    {l:'End date',k:'End date',w:'13%',r:(v)=>{if(!v)return'';const d=new Date(v),diff=(d-new Date())/86400000;return`<span class="${diff<30?'danger':diff<60?'warn':'ok'}">${v}</span>`;}},
+    {l:'Type',k:'Type',w:'9%',r:v=>bd(v==='AtWill'?'amber':'blue',v)},
+    {l:'Status',k:'Status',w:'9%',r:v=>bd(v==='Active'?'green':v==='Future'?'blue':'gray',v)},
+    rmCol('leases'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Account number')+
+    (exp90.length?secH('Expiring within 90 days',exp90.length,tbl(exp90,cols,'l-exp',r=>leaseD(r)),'alert'):'')+ 
+    (future.length?secH('Future leases',future.length,tbl(future,cols,'l-fut',r=>leaseD(r))):'')+ 
+    secH('All active leases',active.length,tbl(active,cols,'l-all',r=>leaseD(r)))+
+    `<div class="totals"><span>Active: <strong>${active.length}</strong></span><span>Rent roll: <strong>$${Math.round(totalRent).toLocaleString()}</strong></span></div>`;
+}
+function leaseD(r){show('Lease','Lease — '+r.Unit,df('Account',r['Account number'])+df('Tenants',r.Tenants)+df('Unit',r.Unit)+df('Status',bd(r.Status==='Active'?'green':'blue',r.Status))+df('Type',bd(r.Type==='AtWill'?'amber':'blue',r.Type))+df('Rent','$'+parseFloat(r.Rent||0).toFixed(2))+df('Start',r['Start date'])+df('End',r['End date'])+drRm('leases',r));}
+
+function pVac(c,rows,prev){
+  const unlisted=rows.filter(r=>r['Listed date']==='Unlisted');
+  const cols=[{l:'Property',k:'Property',w:'34%'},{l:'Unit',k:'Unit',w:'10%'},{l:'Available',k:'Available date',w:'13%',r:v=>v||bd('amber','TBD')},{l:'Rent',k:'Listing rent',w:'12%',r:v=>v?'$'+v:bd('amber','Not set')},{l:'Bed',k:'Bed',w:'7%'},{l:'Bath',k:'Bath',w:'7%'},{l:'Status',k:'Listed date',w:'10%',r:v=>bd(v==='Unlisted'?'amber':'green',v||'Unlisted')},rmCol('vacancies')];
+  c.innerHTML=wcBar(rows,prev,'Unit')+secH('Unlisted — need marketing',unlisted.length,tbl(unlisted,cols,'v-u',r=>vacD(r)),'alert')+(rows.filter(r=>r['Listed date']!=='Unlisted'&&r['Listed date']).length?secH('Listed',rows.filter(r=>r['Listed date']!=='Unlisted').length,tbl(rows.filter(r=>r['Listed date']!=='Unlisted'),cols,'v-l',r=>vacD(r))):'');
+}
+function vacD(r){show('Vacancy',r.Property,df('Property',r.Property)+df('Unit',r.Unit)+df('Status',bd(r['Listed date']==='Unlisted'?'amber':'green',r['Listed date']||'Unlisted'))+df('Available',r['Available date']||'Not set')+df('Rent',r['Listing rent']?'$'+r['Listing rent']:'Not set')+df('Bed/Bath',(r.Bed||'?')+'br / '+(r.Bath||'?')+'ba')+'<hr class="dv"><div class="df"><div class="df-l">Action</div><div class="df-v alert">Unit is unlisted — set price and publish to HAR</div></div>'+drRm('vacancies',r));}
+
+function pMoveIn(c,rows,prev){
+  const today=new Date();
+  const soon=rows.filter(r=>{const d=r['Lease start date']?new Date(r['Lease start date']):null;if(!d)return false;return(d-today)/86400000<=14&&(d-today)/86400000>=0;});
+  const cols=[{l:'Property',k:'Property',w:'26%'},{l:'Unit',k:'Unit',w:'11%'},{l:'Tenants',k:'Tenants',w:'22%'},{l:'Move-in',k:'Lease start date',w:'12%'},{l:'End',k:'Lease end date',w:'12%'},{l:'Status',k:'Lease status',w:'10%',r:v=>bd(v==='Activated'?'green':'blue',v||'—')},rmCol('movein')];
+  c.innerHTML=wcBar(rows,prev,'Unit')+(soon.length?secH('Moving in within 14 days',soon.length,tbl(soon,cols,'mi-s',r=>miD(r)),'warn'):'')+secH('All upcoming move-ins',rows.length,tbl(rows,cols,'mi-a',r=>miD(r)));
+}
+function miD(r){show('Move In',(r.Property||r.Tenants||'').split(',')[0],df('Property',r.Property)+df('Unit',r.Unit)+df('Tenants',r.Tenants)+df('Start',r['Lease start date'])+df('End',r['Lease end date'])+df('Status',bd(r['Lease status']==='Activated'?'green':'blue',r['Lease status']||'—'))+(r.Comments?'<hr class="dv">'+df('Comments',r.Comments,'note'):'')+drRm('movein',r));}
+
+function pMoveOut(c,rows,prev){
+  const urgent=rows.filter(r=>parseFloat(r['Days left'])<=30);
+  const cols=[{l:'Days',k:'Days left',w:'7%',r:v=>{const n=parseFloat(v);return`<span class="${n<=14?'danger':n<=30?'warn':'ok'}">${v}d</span>`;}},{l:'Property',k:'Property',w:'26%'},{l:'Unit',k:'Unit',w:'8%'},{l:'Tenants',k:'Tenants',w:'20%'},{l:'Move-out',k:'Move out date',w:'12%'},{l:'Status',k:'Status',w:'11%',r:v=>bd(v==='Notice given'?'amber':'gray',v||'—')},rmCol('moveout')];
+  c.innerHTML=wcBar(rows,prev,'Unit')+(urgent.length?secH('Urgent — 30 days or less',urgent.length,tbl(urgent,cols,'mo-u',r=>moD(r)),'alert'):'')+secH('All move-outs',rows.length,tbl(rows,cols,'mo-a',r=>moD(r)));
+}
+function moD(r){const n=parseFloat(r['Days left']);show('Move Out',r.Property,df('Tenants',r.Tenants)+df('Days left',`<span class="${n<=14?'danger':n<=30?'warn':'ok'}" style="font-size:18px;font-weight:700">${r['Days left']}d</span>`)+df('Move-out date',r['Move out date'])+df('Notice given',r['Notice given date']||'—')+df('Status',bd(r.Status==='Notice given'?'amber':'gray',r.Status||'—'))+(r.Comments?'<hr class="dv">'+df('Comments',r.Comments,'note'):'')+drRm('moveout',r));}
+
+function pBal(c,rows,prev){
+  const o90=rows.filter(r=>parseFloat(r['90+ days'])>0);
+  const evict=rows.filter(r=>r['Eviction date (if applicable)']);
+  const total=rows.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0);
+  const ot=rows.reduce((s,r)=>s+(parseFloat(r['90+ days'])||0),0);
+  const cols=[{l:'Tenant',k:'Tenants',w:'20%'},{l:'Unit',k:'Unit',w:'20%'},{l:'0-30d',k:'0 - 30 days',w:'9%',r:v=>v&&parseFloat(v)?`<span class="warn">$${parseFloat(v).toLocaleString()}</span>`:'—'},{l:'30-60d',k:'30 - 60 days',w:'9%',r:v=>v&&parseFloat(v)?`<span class="warn">$${parseFloat(v).toLocaleString()}</span>`:'—'},{l:'60-90d',k:'60 - 90 days',w:'9%',r:v=>v&&parseFloat(v)?`<span class="danger">$${parseFloat(v).toLocaleString()}</span>`:'—'},{l:'90+d',k:'90+ days',w:'9%',r:v=>v&&parseFloat(v)?`<span class="danger">$${parseFloat(v).toLocaleString()}</span>`:'—'},{l:'Total',k:'Balance',w:'9%',r:v=>`<strong>$${parseFloat(v||0).toLocaleString()}</strong>`},{l:'Eviction',k:'Eviction date (if applicable)',w:'9%',r:v=>v?bd('red',v):bd('gray','None')},rmCol('balances')];
+  c.innerHTML=`<div class="sec"><div class="sec-head alert"><span class="sec-title">Total outstanding</span><span style="font-size:16px;font-weight:800;color:var(--red)">$${Math.round(total).toLocaleString()}</span></div><div class="totals"><span>90+ days: <strong style="color:var(--red)">$${Math.round(ot).toLocaleString()}</strong></span><span>Evictions: <strong>${evict.length}</strong></span><span>Tenants: <strong>${rows.length}</strong></span></div></div>`+wcBar(rows,prev,'Account number')+(evict.length?secH('Eviction filed',evict.length,tbl(evict,cols,'b-ev',r=>balD(r)),'alert'):'')+( o90.length?secH('90+ days — escalate now',o90.length,tbl(o90,cols,'b-90',r=>balD(r)),'alert'):'')+secH('All balances',rows.length,tbl(rows,cols,'b-all',r=>balD(r)));
+}
+function balD(r){const t=parseFloat(r.Balance||0);show('Collections',r.Tenants||r.Unit,df('Account',r['Account number'])+df('Tenants',r.Tenants)+df('Unit',r.Unit)+df('Eviction',r['Eviction date (if applicable)']?bd('red',r['Eviction date (if applicable)']):bd('gray','None'))+'<hr class="dv">'+df('0-30d','$'+(parseFloat(r['0 - 30 days'])||0).toLocaleString())+df('30-60d','$'+(parseFloat(r['30 - 60 days'])||0).toLocaleString())+df('60-90d','<span class="danger">$'+(parseFloat(r['60 - 90 days'])||0).toLocaleString()+'</span>')+df('90+ days','<span class="danger">$'+(parseFloat(r['90+ days'])||0).toLocaleString()+'</span>')+'<hr class="dv">'+df('Total','<strong style="font-size:17px;color:var(--red)">$'+t.toLocaleString()+'</strong>')+'<hr class="dv"><div class="df"><div class="df-l">Action</div><div class="nstack">'+(parseFloat(r['90+ days'])>0?'<div class="ni red">90+ days — file eviction or escalate to attorney</div>':'')+(parseFloat(r['60 - 90 days'])>0?'<div class="ni red">60-90 days — send formal demand notice</div>':'')+'<div class="ni teal">Confirm ledger up to date in Buildium</div></div></div>'+drRm('balances',r));}
+
+function pTasks(c,rows,prev){
+  const today=new Date();
+  const overdue=rows.filter(r=>r.Status!=='Completed'&&r['Due date']&&new Date(r['Due date'])<today);
+  const noV=rows.filter(r=>!r.Vendors||!r.Vendors.trim());
+  const inp=rows.filter(r=>r.Status==='In Progress');
+  const done=rows.filter(r=>r.Status==='Completed');
+  const spend=rows.reduce((s,r)=>s+(parseFloat(r.Amount)||0),0);
+  const pct=rows.length?Math.round(done.length/rows.length*100):0;
+  const vSpend={};rows.forEach(t=>{const v=t.Vendors||'Unassigned';vSpend[v]=(vSpend[v]||0)+(parseFloat(t.Amount)||0);});
+  const topV=Object.entries(vSpend).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const catS={};rows.forEach(t=>{const cat=t.Category||'Other';catS[cat]=(catS[cat]||0)+(parseFloat(t.Amount)||0);});
+  const topC=Object.entries(catS).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const cols=[{l:'Task',k:'Short description',w:'26%'},{l:'Property',k:'Property',w:'18%'},{l:'Status',k:'Status',w:'9%',r:v=>bd(v==='Completed'?'green':v==='In Progress'?'amber':'blue',v||'New')},{l:'Vendor',k:'Vendors',w:'13%',r:v=>v||bd('red','None')},{l:'Amount',k:'Amount',w:'8%',r:v=>v?'$'+parseFloat(v).toFixed(2):'—'},{l:'Due',k:'Due date',w:'10%',r:(v,r)=>{if(!v)return'—';const d=new Date(v);return r.Status!=='Completed'&&d<today?`<span class="danger">${v.split(' ')[0]}</span>`:v.split(' ')[0];}},rmCol('tasks')];
+  c.innerHTML=`<div class="sec" style="margin-bottom:12px"><div class="sec-head"><span class="sec-title">Work order summary</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="text-align:center;padding:10px;background:var(--blue2);border-radius:var(--r)"><div style="font-size:26px;font-weight:700;color:var(--blue)">${rows.length.toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">Total</div></div>
+      <div style="text-align:center;padding:10px;background:var(--teal2);border-radius:var(--r)"><div style="font-size:26px;font-weight:700;color:var(--teal)">${done.length.toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">Done (${pct}%)</div></div>
+      <div style="text-align:center;padding:10px;background:var(--amber2);border-radius:var(--r)"><div style="font-size:26px;font-weight:700;color:var(--amber)">${inp.length.toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">In Progress</div></div>
+      <div style="text-align:center;padding:10px;background:var(--red2);border-radius:var(--r)"><div style="font-size:26px;font-weight:700;color:var(--red)">${overdue.length.toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">Overdue</div></div>
+      <div style="text-align:center;padding:10px;background:var(--purple2);border-radius:var(--r)"><div style="font-size:26px;font-weight:700;color:var(--purple)">${noV.length.toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">No Vendor</div></div>
+      <div style="text-align:center;padding:10px;background:var(--g50);border-radius:var(--r)"><div style="font-size:19px;font-weight:700;color:var(--g800)">$${Math.round(spend).toLocaleString()}</div><div style="font-size:10px;color:var(--g600);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">Total Spend</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
+      <div style="padding:12px 16px;border-right:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Top vendors by spend</div>${topV.map(([v,a])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--g100)"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%">${v}</span><strong>$${Math.round(a).toLocaleString()}</strong></div>`).join('')}</div>
+      <div style="padding:12px 16px"><div style="font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Spend by category</div>${topC.map(([cat,a])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--g100)"><span>${cat}</span><strong>$${Math.round(a).toLocaleString()}</strong></div>`).join('')}</div>
+    </div>
+  </div>`+wcBar(rows,prev,'TaskId')+(overdue.length?secH('Overdue — past due',overdue.length,tbl(overdue,cols,'t-od',r=>taskD(r)),'alert'):'')+( noV.length?secH('New — no vendor yet',noV.length,tbl(noV,cols,'t-nv',r=>taskD(r)),'warn'):'')+secH('In progress',inp.length,tbl(inp,cols,'t-ip',r=>taskD(r)))+secH('All work orders',rows.length,tbl(rows,cols,'t-all',r=>taskD(r)));
+}
+function taskD(r){show('Work Order',r['Short description'],df('Task ID',r.TaskId)+df('Property',r.Property+(r.Unit?' — '+r.Unit:''))+df('Status',bd(r.Status==='Completed'?'green':r.Status==='In Progress'?'amber':'blue',r.Status||'New'))+df('Category',r.Category)+df('Vendor',r.Vendors||bd('red','Not assigned'))+df('Amount',r.Amount?'$'+parseFloat(r.Amount).toFixed(2):'Not set')+df('Created',r['Creation date']?r['Creation date'].split(' ')[0]:'—')+df('Due',r['Due date']?r['Due date'].split(' ')[0]:'Not set')+(r['Latest comments']?'<hr class="dv">'+df('Comments',r['Latest comments'],'note'):'')+drRm('tasks',r));}
+
+function pTenants(c,rows,prev){
+  const pets=rows.filter(r=>r['Number of pets']&&parseInt(r['Number of pets'])>0);
+  const cols=[{l:'Name',k:'First name',w:'14%',r:(v,r)=>v+' '+r['Last name']},{l:'Property',k:'Property name',w:'24%'},{l:'Unit',k:'Unit number',w:'7%'},{l:'Rent',k:'Rent/Fee',w:'8%',r:v=>v?'$'+parseFloat(v).toFixed(0):'—'},{l:'Start',k:'Start date',w:'9%'},{l:'End',k:'End date',w:'9%'},{l:'Status',k:'Status',w:'7%',r:v=>bd(v==='Tenant'?'green':'gray',v||'—')},{l:'Pets',k:'Number of pets',w:'6%',r:v=>v&&parseInt(v)?bd('purple',v+'🐾'):'—'},rmCol('tenants')];
+  c.innerHTML=wcBar(rows,prev,'Id')+(pets.length?secH('Tenants with pets',pets.length,tbl(pets,cols,'ten-p',r=>tenD(r))):'')+secH('All tenants',rows.length,tbl(rows,cols,'ten-a',r=>tenD(r)));
+}
+function tenD(r){show('Tenant',r['First name']+' '+r['Last name'],df('Property',r['Property name'])+df('Unit',r['Unit number'])+df('Lease',r['Start date']+' — '+r['End date'])+df('Rent','$'+parseFloat(r['Rent/Fee']||0).toFixed(2)+'/'+r['Rent cycle'])+df('Pets',r['Number of pets']?r['Number of pets']+' pet(s)':'None')+'<hr class="dv">'+df('Email',r['Login email']||r['Alternate email']||'—')+df('Mobile',r.Mobile||'—')+df('Emergency',r['Emergency name']?r['Emergency name']+' '+r['Emergency phone']:'—')+(r.Comment?'<hr class="dv">'+df('Comment',r.Comment,'note'):'')+drRm('tenants',r));}
+
+function pProps(c,rows,prev){
+  const cols=[{l:'Property',k:'Property name',w:'28%'},{l:'City',k:'City/Locality',w:'12%'},{l:'State',k:'State/Province',w:'7%'},{l:'Type',k:'Building type',w:'14%'},{l:'Owners',k:'Rental owners',w:'24%'},{l:'Bank',k:'Operating bank account',w:'15%'}];
+  c.innerHTML=secH('All properties',rows.length,tbl(rows,cols,'pr-a',r=>propD(r)));
+}
+function propD(r){show('Property',r['Property name'],df('Address',[r['Address 1'],r['City/Locality'],r['State/Province'],r['Postal code']].filter(Boolean).join(', '))+df('Type',r['Building type'])+df('Owners',r['Rental owners']||'—')+df('Bank',r['Operating bank account']||'—')+drRm('properties',r));}
+
+function pOwners(c,rows,prev){
+  const cols=[{l:'Name',k:'Name',w:'18%'},{l:'Property',k:'Property name',w:'26%'},{l:'Email',k:'Login email',w:'18%'},{l:'Mobile',k:'Mobile',w:'12%'},{l:'1099',k:'Eligible for 1099 (optional)',w:'7%',r:v=>bd(v==='Yes'?'green':'gray',v||'—')}];
+  c.innerHTML=secH('All owners',rows.length,tbl(rows,cols,'ow-a',r=>ownerD(r)));
+}
+function ownerD(r){show('Owner',r.Name||r['First name']+' '+r['Last name'],df('Property',r['Property name'])+df('Ownership',r['Ownership Percentage'])+df('Email',r['Login email']||'—')+df('Mobile',r.Mobile||'—')+df('1099',bd(r['Eligible for 1099 (optional)']?'green':'gray',r['Eligible for 1099 (optional)']||'—'))+drRm('owners',r));}
+
+function pApps(c,rows,prev){
+  const cols=[{l:'Name',k:'ApplicantName',w:'22%'},{l:'Property',k:'PropertyUnit',w:'26%'},{l:'Status',k:'Status',w:'12%',r:v=>bd(v==='Approved'?'green':v==='Pending'?'amber':'red',v||'—')},{l:'Email',k:'Email',w:'20%'},{l:'Mobile',k:'MobilePhone',w:'12%'},{l:'Applied',k:'ApplicationReceivedDateTime',w:'8%',r:v=>v?v.split(' ')[0]:'—'}];
+  c.innerHTML=secH('All applicants',rows.length,tbl(rows,cols,'ap-a',r=>appD(r)));
+}
+function appD(r){show('Applicant',r.ApplicantName,df('Application #',r.ApplicationNumber||r.Id)+df('Status',bd(r.Status==='Approved'?'green':r.Status==='Pending'?'amber':'red',r.Status||'—'))+df('Property',r.PropertyUnit||'Not assigned')+'<hr class="dv">'+df('Email',r.Email||'—')+df('Mobile',r.MobilePhone||'—')+df('Applied',r.ApplicationReceivedDateTime||'—'));}
+
+// ── REPORTS (offline) ──
+function buildSummary(){
+  const L=S.data.leases||[],B=S.data.balances||[],T=S.data.tasks||[],MO=S.data.moveout||[],V=S.data.vacancies||[],MI=S.data.movein||[];
+  const today=new Date();
+  return{
+    active:L.filter(l=>l.Status==='Active').length,
+    rent:L.filter(l=>l.Status==='Active').reduce((s,l)=>s+(parseFloat(l.Rent)||0),0),
+    unlisted:V.filter(v=>v['Listed date']==='Unlisted').length,
+    totalBal:B.reduce((s,b)=>s+(parseFloat(b.Balance)||0),0),
+    over90:B.reduce((s,b)=>s+(parseFloat(b['90+ days'])||0),0),
+    evictions:B.filter(b=>b['Eviction date (if applicable)']).length,
+    over90tenants:B.filter(b=>parseFloat(b['90+ days'])>0),
+    urgOut:MO.filter(r=>parseFloat(r['Days left'])<=30),
+    movein:MI.length,
+    overdue:T.filter(t=>t.Status!=='Completed'&&t['Due date']&&new Date(t['Due date'])<today),
+    inprog:T.filter(t=>t.Status==='In Progress').length,
+    totalT:T.length,
+    spend:T.reduce((s,t)=>s+(parseFloat(t.Amount)||0),0),
+    exp90:L.filter(l=>{if(l.Status!=='Active')return false;const e=l['End date']?new Date(l['End date']):null;if(!e)return false;const d=(e-today)/86400000;return d>=0&&d<=90;}),
+    remarks:Object.values(S.remarks),
+    week:new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+  };
+}
+
+function buildReport(type){
+  const s=buildSummary();
+  const line='-'.repeat(52);
+  const dline='='.repeat(52);
+  if(type==='owner') return`PROMPT PROPERTY MANAGEMENT
+Owner Portfolio Summary | ${s.week}
+${dline}
+
+PORTFOLIO HEALTH
+  Active leases:      ${s.active}
+  Monthly rent roll:  $${Math.round(s.rent).toLocaleString()}
+  Vacant (unlisted):  ${s.unlisted} units need marketing
+  Upcoming move-ins:  ${s.movein}
+
+FINANCIAL STATUS
+  Outstanding rent:   $${Math.round(s.totalBal).toLocaleString()}
+  Over 90 days:       $${Math.round(s.over90).toLocaleString()} — escalation required
+  Evictions active:   ${s.evictions}
+
+${s.over90tenants.length?`ACCOUNTS REQUIRING ATTENTION\n${s.over90tenants.map(b=>`  • ${b.Tenants||b.Unit} — $${parseFloat(b.Balance||0).toLocaleString()} outstanding`).join('\n')}\n`:''}${s.exp90.length?`LEASES EXPIRING IN 90 DAYS\n${s.exp90.map(l=>`  • ${l.Tenants} — ${l.Unit} — expires ${l['End date']}`).join('\n')}\n`:'LEASES\n  No leases expiring within 90 days.\n'}
+MAINTENANCE
+  Work orders:        ${s.totalT.toLocaleString()}
+  In progress:        ${s.inprog}
+  Overdue bills:      ${s.overdue.length}
+  Total spend:        $${Math.round(s.spend).toLocaleString()}
+
+TEAM NOTES THIS WEEK
+${s.remarks.length?s.remarks.map((r,i)=>`  ${i+1}. ${r}`).join('\n'):'  No remarks recorded.'}
+
+${dline}
+Generated: ${new Date().toLocaleString()} | Prompt Property Management`;
+
+  if(type==='management') return`PROMPT PROPERTY MANAGEMENT
+Weekly Management Report | ${s.week}
+${dline}
+
+THIS WEEK AT A GLANCE
+  ${s.active} active leases | $${Math.round(s.rent).toLocaleString()}/month rent roll
+  ${s.unlisted>0?'⚠ '+s.unlisted+' vacant units unlisted — revenue at risk':'✓ All vacant units are listed'}
+  ${s.urgOut.length>0?'⚠ '+s.urgOut.length+' move-outs within 30 days':'✓ No urgent move-outs'}
+  ${s.overdue.length>0?'⚠ '+s.overdue.length+' overdue work orders':'✓ No overdue work orders'}
+  ${s.over90tenants.length>0?'🔴 '+s.over90tenants.length+' tenants 90+ days overdue':'✓ No 90+ day collections'}
+
+${line}
+SECTION 1 — LEASING & VACANCY
+  Active leases:    ${s.active}
+  Unlisted units:   ${s.unlisted}
+  Upcoming move-ins:${s.movein}
+  Leases expiring:  ${s.exp90.length} within 90 days
+  Rent roll:        $${Math.round(s.rent).toLocaleString()}/month
+${s.exp90.length?'\n  Renewal needed:\n'+s.exp90.map(l=>`    • ${l.Tenants} | ${l.Unit} | expires ${l['End date']}`).join('\n'):''}
+
+${line}
+SECTION 2 — COLLECTIONS
+  Total outstanding: $${Math.round(s.totalBal).toLocaleString()}
+  90+ day aging:     $${Math.round(s.over90).toLocaleString()} — ESCALATE
+  Evictions filed:   ${s.evictions}
+${s.over90tenants.length?'\n  High-risk accounts:\n'+s.over90tenants.map(b=>`    • ${b.Tenants||b.Unit} — $${parseFloat(b.Balance||0).toLocaleString()} (90+d: $${parseFloat(b['90+ days']||0).toLocaleString()})`).join('\n'):''}
+
+${line}
+SECTION 3 — WORK ORDERS
+  Total:     ${s.totalT.toLocaleString()}
+  In progress:${s.inprog}
+  Overdue:   ${s.overdue.length}
+  Spend:     $${Math.round(s.spend).toLocaleString()}
+${s.overdue.length?'\n  Overdue bills:\n'+s.overdue.slice(0,6).map(t=>`    • ${t['Short description']} | ${t.Property} | $${parseFloat(t.Amount||0).toFixed(2)}`).join('\n'):''}
+
+${line}
+SECTION 4 — IMMEDIATE ACTIONS
+${[...s.over90tenants.map(b=>`  🔴 ESCALATE: ${b.Tenants||b.Unit} — $${parseFloat(b['90+ days']||0).toLocaleString()} 90+ days`),...s.urgOut.map(r=>`  ⚠ MOVE-OUT: ${r.Property} — ${r['Days left']} days`),...(s.unlisted>0?[`  ⚠ LIST: ${s.unlisted} vacant unit(s) on HAR`]:[]),...s.exp90.slice(0,2).map(l=>`  📋 RENEW: ${l.Tenants} — expires ${l['End date']}`)].join('\n')||'  No critical actions this week.'}
+
+TEAM REMARKS
+${s.remarks.length?s.remarks.map((r,i)=>`  ${i+1}. ${r}`).join('\n'):'  None recorded.'}
+
+${dline}
+Generated: ${new Date().toLocaleString()}`;
+
+  return`PROMPT PROPERTY MANAGEMENT
+Team Briefing | ${s.week}
+${dline}
+Good morning team. Here is what we are working on this week.
+
+PRIORITY LIST
+${[...s.over90tenants.map((b,i)=>`  ${i+1}. COLLECTIONS: Call ${b.Tenants||b.Unit} — $${parseFloat(b['90+ days']||0).toLocaleString()} over 90 days. Escalate if no response.`),...s.urgOut.filter(r=>parseFloat(r['Days left'])<=14).map((r,i)=>`  ${s.over90tenants.length+i+1}. MOVE-OUT: Inspect ${r.Property} — only ${r['Days left']} days left.`),...(s.unlisted>0?[`  VACANCY: List ${s.unlisted} unit(s) on HAR today. Every day unlisted = lost revenue.`]:[]),...s.overdue.slice(0,3).map(t=>`  OVERDUE: Pay ${t['Short description']} at ${t.Property} — $${parseFloat(t.Amount||0).toFixed(2)}`),...s.exp90.slice(0,2).map(l=>`  RENEWAL: Contact ${l.Tenants} — expires ${l['End date']}`)].join('\n')||'  All clear this week.'}
+
+${line}
+NUMBERS
+  Active leases: ${s.active}     Move-ins:    ${s.movein}
+  Overdue bills: ${s.overdue.length}        Move-outs≤30: ${s.urgOut.length}
+  Collections:   ${(S.data.balances||[]).length}     Vacant:       ${s.unlisted}
+  Work orders:   ${s.totalT.toLocaleString()}     Spend:        $${Math.round(s.spend).toLocaleString()}
+
+${line}
+TEAM NOTES FROM LAST WEEK
+${s.remarks.length?s.remarks.map((r,i)=>`  ${i+1}. ${r}`).join('\n'):'  None recorded.'}
+
+${dline}
+Generated: ${new Date().toLocaleString()} | Have a great week!`;
+}
+
+function openReport(type){
+  const labels={owner:'Owner Summary',management:'Management Report',team:'Team Briefing'};
+  rType=type;rText=buildReport(type);
+  document.getElementById('rTitle').textContent=labels[type]||'Report';
+  document.getElementById('rText').textContent=rText;
+  document.getElementById('rmov').classList.add('open');
+}
+function closeReport(){document.getElementById('rmov').classList.remove('open');}
+function copyReport(){navigator.clipboard.writeText(rText).then(()=>toast('Copied to clipboard'));}
+function dlReport(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rText],{type:'text/plain'}));a.download='PPM_Report_'+new Date().toISOString().split('T')[0]+'.txt';a.click();}
+
+// ── EXCEL EXPORT ──
+function dlExcel(){
+  const week=new Date().toISOString().split('T')[0];
+  let count=0;
+  TABS.forEach(t=>{
+    const rows=S.data[t.key];
+    if(!rows||!rows.length)return;
+    const heads=[...Object.keys(rows[0]),'Remark'];
+    const csv=[heads.join(','),...rows.map(r=>{const rm=getRm(t.key,r)||'';return heads.map(h=>'"'+(h==='Remark'?rm:(r[h]||'')).replace(/"/g,'""')+'"').join(',');})].join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`PPM_${t.label.replace(/\s+/g,'_')}_${week}.csv`;a.click();count++;
+  });
+  if(!count)toast('No data loaded to export');
+  else toast(count+' CSV file(s) downloaded — open in Excel');
+}
+
+// ── SAVE TO SHAREPOINT ──
+function saveToSharePoint(){
+  const week=new Date().toISOString().split('T')[0];
+  const payload={version:'PPM-v3',week,savedAt:new Date().toISOString(),remarks:S.remarks,rowCounts:{}};
+  TABS.forEach(t=>{if(S.data[t.key])payload.rowCounts[t.key]=S.data[t.key].length;});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download=`PPM_Weekly_Report_${week}.json`;a.click();
+  markSavedLS(week);markSaved();
+  toast('Saved — drag file to SharePoint folder');
+  setTimeout(()=>window.open('https://promptmortgagecompanycom.sharepoint.com/:f:/s/PromptPropertyManagement/IgBEHvM9smpuQL7ifYfSBmdGAc2l4l-b-ix_pazvGsJ-478?e=Pmemo2','_blank'),1200);
+}
+
+// ── INIT ──
+function init(){
+  renderChips();
+  renderUGrid();
+  initBackup();
+}
+init();
+</script>
+</body>
+</html>
