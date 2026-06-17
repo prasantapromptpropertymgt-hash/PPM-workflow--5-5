@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPM Ops — Prompt Property Management</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0c2340;--navy2:#1a3a5c;--navy3:#2a5080;
+  --teal:#0aaa7f;--teal2:#e0f7f1;
+  --amber:#d97706;--amber2:#fff8e6;
+  --red:#dc2626;--red2:#fff1f1;
+  --blue:#1d4ed8;--blue2:#eff6ff;
+  --purple:#7c3aed;--purple2:#f5f3ff;
+  --slate:#64748b;
+  --g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;--g300:#cbd5e1;
+  --g400:#94a3b8;--g600:#475569;--g800:#1e293b;--g900:#0f172a;
+  --text:#0f172a;--border:#e2e8f0;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;
+  --r:8px;--rl:14px;--rxl:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.08);
+}
+body{font-family:var(--sans);background:#f0f4f9;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+/* TOPBAR */
+.topbar{background:var(--navy);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.05);gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--teal),#067a5c);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;letter-spacing:-.5px;flex-shrink:0}
+.brand-name{color:#fff;font-weight:700;font-size:14px;letter-spacing:-.2px}
+.brand-sub{color:#5f8aaa;font-size:11px;font-weight:400;letter-spacing:.02em}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.week-tag{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#8db2cc;font-size:11px;padding:4px 12px;border-radius:20px;white-space:nowrap}
+.top-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(10,170,127,.2)}
+.btn-up{background:var(--teal);color:#fff;border:none;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-up:hover{background:#089068}
+.btn-up svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-nav{background:rgba(255,255,255,.08);color:#c8dcea;border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px;transition:background .15s}
+.btn-nav:hover{background:rgba(255,255,255,.14)}
+.btn-nav svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* WRAP */
+.wrap{padding:20px 28px 60px;max-width:1440px;margin:0 auto}
+
+/* LANDING */
+.landing{background:#fff;border:1px solid var(--border);border-radius:var(--rxl);padding:48px 32px;text-align:center;margin-bottom:20px;box-shadow:var(--shadow)}
+.landing-icon{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--teal),#067a5c);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;margin:0 auto 20px;letter-spacing:-1px}
+.landing h2{font-size:22px;font-weight:700;color:var(--g800);margin-bottom:8px;letter-spacing:-.3px}
+.landing p{font-size:14px;color:var(--g600);max-width:520px;margin:0 auto 28px;line-height:1.6}
+.landing-divider{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--g400);margin-bottom:14px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px}
+.chip{font-size:12px;font-weight:500;padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;background:#fff;color:var(--g600);transition:all .15s;display:flex;align-items:center;gap:6px}
+.chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal2)}
+.chip.loaded{border-color:var(--teal);background:var(--teal2);color:#067a5c;font-weight:600}
+.chip-dot{width:6px;height:6px;border-radius:50%;background:var(--g300);flex-shrink:0}
+.chip.loaded .chip-dot{background:var(--teal)}
+.landing-hint{font-size:12px;color:var(--g400);border-top:1px solid var(--border);padding-top:18px;margin-top:4px}
+.landing-hint a{color:var(--teal);font-weight:500}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:18px}
+.sc{background:#fff;border-radius:var(--r);padding:14px 16px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.t-teal::before{background:var(--teal)}.sc.t-amber::before{background:var(--amber)}
+.sc.t-red::before{background:var(--red)}.sc.t-blue::before{background:var(--blue)}
+.sc.t-purple::before{background:var(--purple)}.sc.t-slate::before{background:var(--slate)}
+.sc-lbl{font-size:11px;color:var(--g600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;font-weight:600}
+.sc-val{font-size:26px;font-weight:700;line-height:1;letter-spacing:-.5px;margin-bottom:3px}
+.sc-sub{font-size:11px;color:var(--g400)}
+.t-teal .sc-val{color:var(--teal)}.t-amber .sc-val{color:var(--amber)}
+.t-red .sc-val{color:var(--red)}.t-blue .sc-val{color:var(--blue)}
+.t-purple .sc-val{color:var(--purple)}.t-slate .sc-val{color:var(--slate)}
+
+/* ACTION BAR */
+.action-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.action-bar-left{flex:1;display:flex;gap:8px;flex-wrap:wrap}
+.action-bar-right{display:flex;gap:8px;flex-shrink:0}
+.btn-action{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--g800);transition:all .15s;cursor:pointer}
+.btn-action:hover{border-color:var(--teal);color:var(--teal);background:var(--teal2)}
+.btn-action.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-action.primary:hover{background:var(--navy2);border-color:var(--navy2)}
+.btn-action.amber{background:var(--amber2);color:var(--amber);border-color:#fde68a}
+.btn-action.amber:hover{background:#fef3c7}
+.btn-action svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* TABNAV */
+.tabnav{display:flex;gap:2px;background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:4px;margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
+.tabnav::-webkit-scrollbar{height:0}
+.tbtn{white-space:nowrap;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--g600);display:flex;align-items:center;gap:5px;transition:all .15s;letter-spacing:.01em}
+.tbtn:hover{background:var(--g100);color:var(--g800)}
+.tbtn.active{background:var(--navy);color:#fff;box-shadow:0 1px 3px rgba(12,35,64,.3)}
+.tbtn .cnt{font-size:10px;opacity:.6;font-weight:500}
+
+/* SECTIONS */
+.sec{background:#fff;border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.sec-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--g50)}
+.sec-title{font-size:13px;font-weight:700;color:var(--g800);letter-spacing:-.1px}
+.sec-count{font-size:11px;background:var(--g200);color:var(--g600);padding:2px 9px;border-radius:10px;font-weight:600}
+.sec-head.alert{background:var(--red2);border-bottom-color:#fecaca}
+.sec-head.alert .sec-title{color:var(--red)}
+.sec-head.alert .sec-count{background:var(--red);color:#fff}
+.sec-head.warn{background:var(--amber2);border-bottom-color:#fde68a}
+.sec-head.warn .sec-title{color:var(--amber)}
+
+/* FILTER BAR */
+.fbar{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--g50)}
+.fbar-icon{color:var(--g400);font-size:14px;flex-shrink:0}
+.finp{flex:1;font-size:12px;padding:5px 0;border:none;background:transparent;outline:none;color:var(--text)}
+.finp::placeholder{color:var(--g400)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 14px;font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);background:var(--g50);white-space:nowrap}
+td{padding:8px 14px;border-bottom:1px solid var(--g200);vertical-align:middle;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr.cr{cursor:pointer}
+tr.cr:hover td{background:var(--teal2)}
+.arr{color:var(--g300);font-size:16px;line-height:1}
+
+/* REMARKS CELL */
+.remark-cell{display:flex;align-items:center;gap:6px;min-width:160px}
+.remark-inp{flex:1;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-family:var(--sans);outline:none;background:#fff;color:var(--text);transition:border-color .15s}
+.remark-inp:focus{border-color:var(--teal);background:var(--teal2)}
+.remark-inp.has-remark{border-color:var(--amber);background:var(--amber2)}
+.remark-save{width:22px;height:22px;border-radius:4px;background:var(--teal);color:#fff;border:none;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;cursor:pointer;flex-shrink:0}
+.remark-cell:focus-within .remark-save{opacity:1}
+
+/* BADGES */
+.b{display:inline-flex;align-items:center;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;white-space:nowrap;line-height:1.5}
+.b-green{background:#d1fae5;color:#065f46}.b-amber{background:#fef3c7;color:#92400e}
+.b-red{background:#fee2e2;color:#991b1b}.b-blue{background:#dbeafe;color:#1e40af}
+.b-purple{background:#ede9fe;color:#5b21b6}.b-gray{background:var(--g100);color:var(--g600)}
+.b-navy{background:#e0e9f5;color:var(--navy)}.b-teal{background:var(--teal2);color:#065f46}
+
+/* AGING */
+.ok{color:var(--teal);font-weight:600}.warn{color:var(--amber);font-weight:600}.danger{color:var(--red);font-weight:600}
+
+/* DRAWER */
+.ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;backdrop-filter:blur(2px)}
+.ov.open{display:block}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:480px;background:#fff;z-index:201;overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1)}
+.drawer.open{transform:none}
+.dh{background:var(--navy);padding:16px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:1}
+.dh-tag{color:#5f8aaa;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:3px}
+.dh h2{color:#fff;font-size:15px;font-weight:700;line-height:1.35;letter-spacing:-.2px}
+.dh-x{background:rgba(255,255,255,.08);border:none;color:#8db2cc;font-size:16px;cursor:pointer;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.dh-x:hover{background:rgba(255,255,255,.15);color:#fff}
+.db{padding:20px}
+.df{margin-bottom:14px}
+.df-l{font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.df-v{font-size:13px;color:var(--text);line-height:1.5}
+.df-v.note{background:var(--g50);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;font-size:12px;color:var(--g800);line-height:1.6}
+.df-v.alert{background:var(--red2);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 6px 6px 0;font-size:12px;line-height:1.6}
+hr.dv{border:none;border-top:1px solid var(--border);margin:16px 0}
+.nstack{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.ni{background:var(--amber2);border-left:3px solid var(--amber);padding:8px 10px;border-radius:0 6px 6px 0;font-size:12px;color:var(--g800);line-height:1.5}
+.ni.red{background:var(--red2);border-left-color:var(--red)}.ni.teal{background:var(--teal2);border-left-color:var(--teal)}
+.drawer-remark-area{margin-top:16px}
+.drawer-remark-area textarea{width:100%;font-size:13px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--sans);outline:none;resize:vertical;min-height:80px;transition:border-color .15s;color:var(--text)}
+.drawer-remark-area textarea:focus{border-color:var(--teal)}
+.drawer-remark-save{margin-top:8px;background:var(--teal);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.drawer-remark-save:hover{background:#089068}
+
+/* REPORT MODAL */
+.rep-mov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.rep-mov.open{display:flex}
+.rep-modal{background:#fff;border-radius:var(--rxl);width:680px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 48px rgba(0,0,0,.18)}
+.rep-head{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--rxl) var(--rxl) 0 0}
+.rep-head h2{color:#fff;font-size:15px;font-weight:700}
+.rep-head-x{background:rgba(255,255,255,.08);border:none;color:#8db2cc;font-size:16px;cursor:pointer;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.rep-tabs{display:flex;gap:2px;padding:10px 16px 0;border-bottom:1px solid var(--border);background:var(--g50)}
+.rep-tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--g600);border-radius:6px 6px 0 0;border-bottom:2px solid transparent;transition:all .15s}
+.rep-tab.active{color:var(--navy);border-bottom-color:var(--navy);background:#fff}
+.rep-body{flex:1;overflow-y:auto;padding:20px}
+.rep-content{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap}
+.rep-loading{text-align:center;padding:40px;color:var(--g600)}
+.rep-loading .spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rep-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--g50);border-radius:0 0 var(--rxl) var(--rxl)}
+
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.mov.open{display:flex}
+.modal{background:#fff;border-radius:var(--rxl);padding:28px 28px 24px;width:560px;max-width:94vw;box-shadow:0 20px 48px rgba(0,0,0,.18)}
+.modal-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.modal-icon{width:40px;height:40px;border-radius:10px;background:var(--teal2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-icon svg{width:20px;height:20px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modal h2{font-size:16px;font-weight:700;letter-spacing:-.2px}
+.modal-sub{font-size:13px;color:var(--g600);margin-bottom:20px;margin-left:52px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+.mc{border:1.5px solid var(--border);border-radius:var(--r);padding:11px 14px;cursor:pointer;transition:all .15s}
+.mc:hover,.mc.sel{border-color:var(--teal);background:var(--teal2)}
+.mc h4{font-size:12px;font-weight:700;color:var(--g800);margin-bottom:2px}
+.mc p{font-size:11px;color:var(--g600);margin:0;line-height:1.4}
+.mc.sel h4{color:#065f46}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--border)}
+.btn-p{background:var(--navy);color:#fff;border:none;padding:9px 20px;border-radius:7px;font-size:13px;font-weight:600;transition:background .15s;cursor:pointer}
+.btn-p:hover{background:var(--navy2)}
+.btn-s{background:#fff;color:var(--g800);border:1.5px solid var(--border);padding:9px 20px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-s:hover{background:var(--g100)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* WEEK COMPARE */
+.wc{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:9px 16px;background:#f0fdf8;border-bottom:1px solid #bbf7d0;font-size:11px;color:#166534}
+.wc-label{font-weight:600;color:#065f46}
+.wc-pill{background:#d1fae5;color:#065f46;padding:1px 8px;border-radius:10px;font-weight:600;font-size:11px}
+.wc-pill.warn{background:#fef3c7;color:#92400e}
+
+/* TOTALS */
+.totals-row{display:flex;gap:20px;padding:10px 18px;background:var(--g50);border-top:1px solid var(--border);font-size:12px;color:var(--g600);flex-wrap:wrap}
+.totals-row strong{color:var(--g800);font-weight:700}
+
+/* EMPTY */
+.empty{text-align:center;padding:44px 20px;color:var(--g600)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.3}
+.empty h3{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--g800)}
+.empty p{font-size:13px}
+
+@media(max-width:700px){.wrap{padding:12px 12px 48px}.drawer{width:100%}.summary{grid-template-columns:repeat(2,1fr)}.topbar{padding:0 14px}.mgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">PPM</div>
+    <div class="brand-text">
+      <div class="brand-name">Prompt Property Management</div>
+      <div class="brand-sub">Operations &amp; Data Dashboard</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="top-dot"></div>
+    <span class="week-tag" id="weekTag">No data loaded</span>
+    <button class="btn-nav" onclick="loadBackup()" title="Load last week's remarks from backup">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Load backup
+    </button>
+    <button class="btn-up" onclick="openModal()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload CSV
+    </button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="landing" id="landing">
+    <div class="landing-icon">PPM</div>
+    <h2>Weekly Operations Dashboard</h2>
+    <p>Upload your Buildium CSV exports to generate this week's report. Add remarks to any record and save the report to SharePoint as your weekly backup.</p>
+    <div class="landing-divider">Select a report to upload</div>
+    <div class="chips" id="chips"></div>
+    <div class="landing-hint">
+      Files stay in your browser only — nothing sent to any server. &nbsp;|&nbsp;
+      Store weekly backups on <a href="https://promptmortgagecompanycom.sharepoint.com/:f:/s/PromptPropertyManagement/IgBEHvM9smpuQL7ifYfSBmdGAc2l4l-b-ix_pazvGsJ-478?e=Pmemo2" target="_blank">SharePoint ↗</a>
+    </div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="summary" id="summary"></div>
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <button class="btn-action amber" onclick="openReport('owner')">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Owner summary
+        </button>
+        <button class="btn-action" onclick="openReport('management')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Management report
+        </button>
+        <button class="btn-action" onclick="openReport('team')">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Team briefing
+        </button>
+      </div>
+      <div class="action-bar-right">
+        <button class="btn-action primary" onclick="saveWeeklyReport()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Save this week to SharePoint
+        </button>
+      </div>
+    </div>
+    <div class="tabnav" id="tabnav"></div>
+    <div id="panels"></div>
+  </div>
+</div>
+
+<div class="ov" id="ov" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dh">
+    <div><div class="dh-tag" id="dTag">Record detail</div><h2 id="dTitle">—</h2></div>
+    <button class="dh-x" onclick="closeDrawer()">&#215;</button>
+  </div>
+  <div class="db" id="dBody"></div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="rep-mov" id="repMov">
+  <div class="rep-modal">
+    <div class="rep-head">
+      <h2 id="repTitle">Report</h2>
+      <button class="rep-head-x" onclick="closeReport()">&#215;</button>
+    </div>
+    <div class="rep-tabs" id="repTabs"></div>
+    <div class="rep-body">
+      <div class="rep-loading" id="repLoading"><div class="spin"></div>Generating report using AI...</div>
+      <div class="rep-content" id="repContent" style="display:none"></div>
+    </div>
+    <div class="rep-foot">
+      <button class="btn-s" onclick="closeReport()">Close</button>
+      <button class="btn-p" onclick="copyReport()">Copy to clipboard</button>
+      <button class="btn-p" onclick="downloadReport()">Download as .txt</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="mov" id="mov">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+      <h2>Upload weekly CSV</h2>
+    </div>
+    <p class="modal-sub">Select the report type then choose your file.</p>
+    <div class="mgrid" id="mgrid"></div>
+    <input type="file" id="fInput" accept=".csv,.json" style="display:none" onchange="handleFile(event)">
+    <div class="mfoot">
+      <button class="btn-s" onclick="closeModal()">Cancel</button>
+      <button class="btn-p" onclick="document.getElementById('fInput').click()">Choose file ›</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TABS=[
+  {key:'leases',    label:'Leases',      sub:'Active lease register'},
+  {key:'vacancies', label:'Vacancies',   sub:'Vacant & unlisted units'},
+  {key:'movein',    label:'Move Ins',    sub:'Upcoming move-ins'},
+  {key:'moveout',   label:'Move Outs',   sub:'Scheduled move-outs'},
+  {key:'balances',  label:'Collections',sub:'Outstanding balances'},
+  {key:'tasks',     label:'Work Orders',sub:'Tasks from Buildium'},
+  {key:'tenants',   label:'Tenants',    sub:'All active tenants'},
+  {key:'properties',label:'Properties', sub:'Full property register'},
+  {key:'owners',    label:'Owners',     sub:'Rental owners'},
+  {key:'applicants',label:'Applicants', sub:'Lease applications'},
+];
+
+const S={data:{},prev:{},remarks:{},loaded:new Set(),activeTab:null,modalKey:'leases'};
+const _rows={};
+let currentReportType='';
+let currentReportText='';
+
+// ── REMARKS ────────────────────────────────────────────────────────
+function remarkKey(tab,row){
+  const keys=['Unit','Property','Account number','TaskId','Id','ApplicantName','Property name'];
+  for(const k of keys){if(row[k])return tab+'::'+row[k];}
+  return tab+'::'+JSON.stringify(row).slice(0,80);
+}
+
+function getRemark(tab,row){
+  return S.remarks[remarkKey(tab,row)]||'';
+}
+
+function setRemark(tab,row,val){
+  const k=remarkKey(tab,row);
+  if(val.trim())S.remarks[k]=val.trim();
+  else delete S.remarks[k];
+}
+
+function saveRemarkFromInput(tab,row,inp){
+  setRemark(tab,row,inp.value);
+  inp.classList.toggle('has-remark',!!inp.value.trim());
+  toast('Remark saved');
+}
+
+// ── BACKUP / RESTORE ───────────────────────────────────────────────
+function saveWeeklyReport(){
+  const weekStr=new Date().toISOString().split('T')[0];
+  const payload={
+    version:'PPM-v2',
+    week:weekStr,
+    savedAt:new Date().toISOString(),
+    remarks:S.remarks,
+    summaries:buildTextSummaries(),
+    rowCounts:{}
+  };
+  TABS.forEach(t=>{if(S.data[t.key])payload.rowCounts[t.key]=S.data[t.key].length;});
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`PPM_Weekly_Report_${weekStr}.json`;
+  a.click();
+  toast('Report saved — upload to SharePoint folder');
+  setTimeout(()=>window.open('https://promptmortgagecompanycom.sharepoint.com/:f:/s/PromptPropertyManagement/IgBEHvM9smpuQL7ifYfSBmdGAc2l4l-b-ix_pazvGsJ-478?e=Pmemo2','_blank'),1500);
+}
+
+function loadBackup(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json';
+  inp.onchange=ev=>{
+    const file=ev.target.files[0];
+    if(!file)return;
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const data=JSON.parse(e.target.result);
+        if(data.remarks){
+          S.remarks={...data.remarks};
+          toast('Last week\'s remarks loaded — '+Object.keys(S.remarks).length+' notes restored');
+          renderActivePanel();
+        }
+      }catch(err){toast('Could not read backup file');}
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+}
+
+function buildTextSummaries(){
+  const leases=S.data.leases||[];
+  const bal=S.data.balances||[];
+  const vac=S.data.vacancies||[];
+  const tasks=S.data.tasks||[];
+  const mout=S.data.moveout||[];
+  const min=S.data.movein||[];
+  const today=new Date();
+  const active=leases.filter(l=>l.Status==='Active');
+  const totalRent=active.reduce((s,l)=>s+(parseFloat(l.Rent)||0),0);
+  const totalBal=bal.reduce((s,b)=>s+(parseFloat(b.Balance)||0),0);
+  const over90=bal.reduce((s,b)=>s+(parseFloat(b['90+ days'])||0),0);
+  const unlisted=vac.filter(v=>v['Listed date']==='Unlisted').length;
+  const urgentOut=mout.filter(r=>parseFloat(r['Days left'])<=30).length;
+  const overdueT=tasks.filter(t=>t.Status!=='Completed'&&t['Due date']&&new Date(t['Due date'])<today).length;
+  const remarks=Object.values(S.remarks);
+  return{active:active.length,totalRent,totalBal,over90,unlisted,urgentOut,overdueT,movein:min.length,remarks};
+}
+
+// ── PLAIN LANGUAGE REPORTS ─────────────────────────────────────────
+const REPORT_TYPES={
+  owner:{
+    label:'Owner summary',
+    tabs:['Leases','Move Outs','Move Ins','Collections','Work Orders'],
+    prompt:(s,remarks)=>`You are a property manager writing a weekly summary for rental property owners. Write in plain, professional English. Be direct and concise. Use simple language — no jargon. Focus on what matters to an owner: their income, their property condition, and any issues that need attention.
+
+Here is this week's data:
+- Active leases: ${s.active}
+- Monthly rent roll: $${Math.round(s.totalRent).toLocaleString()}
+- Vacant units not yet listed: ${s.unlisted}
+- Outstanding balances owed: $${Math.round(s.totalBal).toLocaleString()} (${Math.round(s.over90).toLocaleString()} over 90 days)
+- Move-outs within 30 days: ${s.urgentOut}
+- Upcoming move-ins: ${s.movein}
+- Overdue maintenance tasks: ${s.overdueT}
+- Team notes this week: ${remarks.slice(0,8).join(' | ')||'None recorded'}
+
+Write a 3-paragraph owner summary. Paragraph 1: portfolio health. Paragraph 2: anything requiring owner attention or decision. Paragraph 3: what the team is doing about open items. End with one line about next steps.`
+  },
+  management:{
+    label:'Management report',
+    tabs:['Leases','Collections','Work Orders','Vacancies','Move Outs'],
+    prompt:(s,remarks)=>`You are writing a weekly management report for the Prompt Property Management leadership team. Be factual, specific, and action-oriented. Use clear headings. Flag risks. Highlight wins.
+
+This week's data:
+- Active leases: ${s.active} | Rent roll: $${Math.round(s.totalRent).toLocaleString()}
+- Outstanding collections: $${Math.round(s.totalBal).toLocaleString()} | 90+ days: $${Math.round(s.over90).toLocaleString()}
+- Unlisted vacant units: ${s.unlisted}
+- Urgent move-outs (≤30 days): ${s.urgentOut}
+- Incoming move-ins: ${s.movein}
+- Overdue work orders: ${s.overdueT}
+- Staff remarks: ${remarks.slice(0,10).join(' | ')||'None'}
+
+Write a structured management report with these sections: 1) This week at a glance (3-4 bullet points) 2) Collections & financial risk 3) Leasing & vacancy status 4) Maintenance & work orders 5) Immediate action items for this week. Be specific about numbers. Use plain English.`
+  },
+  team:{
+    label:'Team briefing',
+    tabs:['Work Orders','Move Ins','Move Outs','Collections','Vacancies'],
+    prompt:(s,remarks)=>`You are writing a Monday morning team briefing for the Prompt Property Management operations team. This is internal — be direct, practical, and specific. The team needs to know exactly what to work on this week.
+
+Data:
+- Active leases: ${s.active}
+- Vacant unlisted units: ${s.unlisted} — need marketing action
+- Move-outs in next 30 days: ${s.urgentOut}
+- Move-ins coming up: ${s.movein}
+- Overdue work orders: ${s.overdueT}
+- Total outstanding balances: $${Math.round(s.totalBal).toLocaleString()}
+- Balances over 90 days: $${Math.round(s.over90).toLocaleString()} — escalation needed
+- Team notes from last actions: ${remarks.slice(0,12).join(' | ')||'None recorded'}
+
+Write a team briefing as if reading it out at a Monday standup. Format: 1) Quick wins from last week 2) This week's priority list (numbered, most urgent first) 3) Who needs to do what — use specific action items like "Call tenant at X", "List unit at Y", "File eviction for Z". Keep it practical and energetic. Plain language only.`
+  }
+};
+
+async function openReport(type){
+  currentReportType=type;
+  const config=REPORT_TYPES[type];
+  document.getElementById('repTitle').textContent=config.label;
+  document.getElementById('repLoading').style.display='block';
+  document.getElementById('repContent').style.display='none';
+  document.getElementById('repMov').classList.add('open');
+  const s=buildTextSummaries();
+  const remarks=Object.values(S.remarks);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user',content:config.prompt(s,remarks)}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'Could not generate report. Please try again.';
+    currentReportText=text;
+    document.getElementById('repLoading').style.display='none';
+    document.getElementById('repContent').style.display='block';
+    document.getElementById('repContent').textContent=text;
+  }catch(err){
+    document.getElementById('repLoading').style.display='none';
+    document.getElementById('repContent').style.display='block';
+    document.getElementById('repContent').textContent='Report generation failed. Please check your connection and try again.\n\nError: '+err.message;
+  }
+}
+
+function closeReport(){document.getElementById('repMov').classList.remove('open');}
+
+function copyReport(){
+  navigator.clipboard.writeText(currentReportText).then(()=>toast('Copied to clipboard'));
+}
+
+function downloadReport(){
+  const weekStr=new Date().toISOString().split('T')[0];
+  const type=REPORT_TYPES[currentReportType]?.label||'report';
+  const blob=new Blob([currentReportText],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`PPM_${type.replace(/\s+/g,'_')}_${weekStr}.txt`;
+  a.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+function init(){renderChips();renderMGrid();}
+
+function renderChips(){
+  document.getElementById('chips').innerHTML=TABS.map(t=>
+    `<button class="chip ${S.loaded.has(t.key)?'loaded':''}" onclick="quickUpload('${t.key}')">
+      <span class="chip-dot"></span>${t.label}
+    </button>`
+  ).join('');
+}
+
+function renderMGrid(){
+  document.getElementById('mgrid').innerHTML=TABS.map(t=>
+    `<div class="mc ${S.modalKey===t.key?'sel':''}" onclick="selMod('${t.key}',this)">
+      <h4>${t.label}</h4><p>${t.sub}</p>
+    </div>`
+  ).join('');
+}
+
+// ── UPLOAD ────────────────────────────────────────────────────────
+function quickUpload(key){
+  S.modalKey=key;
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.csv';
+  inp.onchange=ev=>processFile(ev.target.files[0],key);
+  inp.click();
+}
+function openModal(){document.getElementById('mov').classList.add('open');renderMGrid();}
+function closeModal(){document.getElementById('mov').classList.remove('open');}
+function selMod(key,el){S.modalKey=key;document.querySelectorAll('.mc').forEach(m=>m.classList.remove('sel'));el.classList.add('sel');}
+function handleFile(e){processFile(e.target.files[0],S.modalKey);closeModal();}
+
+function processFile(file,key){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const rows=parseCSV(ev.target.result);
+    if(S.data[key]&&S.data[key].length)S.prev[key]=S.data[key];
+    S.data[key]=rows;
+    S.loaded.add(key);
+    if(!S.activeTab)S.activeTab=key;
+    const d=new Date();
+    document.getElementById('weekTag').textContent='Week of '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('landing').style.display='none';
+    document.getElementById('dash').style.display='block';
+    renderChips();renderAll();
+    toast(TABS.find(t=>t.key===key)?.label+' loaded — '+rows.length+' records');
+  };
+  r.readAsText(file);
+}
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const headers=splitL(lines[0]);
+  return lines.slice(1).map(l=>{
+    const vals=splitL(l);
+    const row={};
+    headers.forEach((h,i)=>row[h.trim()]=(vals[i]||'').trim());
+    return row;
+  }).filter(r=>Object.values(r).some(v=>v));
+}
+
+function splitL(line){
+  const res=[];let cur='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){q=!q;continue;}
+    if(c===','&&!q){res.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  res.push(cur);return res;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderAll(){renderSummary();renderTabNav();renderActivePanel();}
+
+function renderSummary(){
+  const leases=S.data.leases||[],vac=S.data.vacancies||[],bal=S.data.balances||[];
+  const mout=S.data.moveout||[],tasks=S.data.tasks||[],min=S.data.movein||[];
+  const today=new Date();
+  const active=leases.filter(l=>l.Status==='Active').length;
+  const future=leases.filter(l=>l.Status==='Future').length;
+  const rent=leases.filter(l=>l.Status==='Active').reduce((s,l)=>s+(parseFloat(l.Rent)||0),0);
+  const unlisted=vac.filter(v=>v['Listed date']==='Unlisted').length;
+  const totalBal=bal.reduce((s,b)=>s+(parseFloat(b.Balance)||0),0);
+  const over90=bal.reduce((s,b)=>s+(parseFloat(b['90+ days'])||0),0);
+  const urgentOut=mout.filter(r=>parseFloat(r['Days left'])<=30).length;
+  const overdueT=tasks.filter(t=>t.Status!=='Completed'&&t['Due date']&&new Date(t['Due date'])<today).length;
+  const inprog=tasks.filter(t=>t.Status==='In Progress').length;
+  const remarksCount=Object.keys(S.remarks).length;
+  document.getElementById('summary').innerHTML=`
+    <div class="sc t-teal"><div class="sc-lbl">Active leases</div><div class="sc-val">${active}</div><div class="sc-sub">${future} future signed</div></div>
+    <div class="sc t-amber"><div class="sc-lbl">Vacant units</div><div class="sc-val">${unlisted}</div><div class="sc-sub">unlisted — need marketing</div></div>
+    <div class="sc t-blue"><div class="sc-lbl">Monthly rent</div><div class="sc-val" style="font-size:19px">$${Math.round(rent).toLocaleString()}</div><div class="sc-sub">active leases</div></div>
+    <div class="sc t-red"><div class="sc-lbl">Outstanding</div><div class="sc-val" style="font-size:19px">$${Math.round(totalBal).toLocaleString()}</div><div class="sc-sub">$${Math.round(over90).toLocaleString()} over 90d</div></div>
+    <div class="sc t-amber"><div class="sc-lbl">Move-outs ≤30d</div><div class="sc-val">${urgentOut}</div><div class="sc-sub">need immediate action</div></div>
+    <div class="sc t-purple"><div class="sc-lbl">Move-ins due</div><div class="sc-val">${min.length}</div><div class="sc-sub">activating soon</div></div>
+    <div class="sc t-slate"><div class="sc-lbl">Team remarks</div><div class="sc-val">${remarksCount}</div><div class="sc-sub">notes added this week</div></div>
+  `;
+}
+
+function renderTabNav(){
+  document.getElementById('tabnav').innerHTML=TABS.filter(t=>S.loaded.has(t.key)).map(t=>
+    `<button class="tbtn ${S.activeTab===t.key?'active':''}" onclick="switchTab('${t.key}')">
+      ${t.label}<span class="cnt">${(S.data[t.key]||[]).length}</span>
+    </button>`
+  ).join('');
+}
+
+function switchTab(key){S.activeTab=key;renderTabNav();renderActivePanel();}
+
+function renderActivePanel(){
+  const c=document.getElementById('panels');c.innerHTML='';
+  const key=S.activeTab;
+  const rows=S.data[key]||[],prev=S.prev[key]||[];
+  if(!rows.length){c.innerHTML=`<div class="sec"><div class="empty"><div class="empty-icon">📂</div><h3>No data loaded</h3><p>Upload the ${TABS.find(t=>t.key===key)?.label} CSV</p></div></div>`;return;}
+  ({leases:pLeases,vacancies:pVac,movein:pMoveIn,moveout:pMoveOut,balances:pBal,tasks:pTasks,tenants:pTenants,properties:pProps,owners:pOwners,applicants:pApps})[key]?.(c,rows,prev);
+}
+
+// ── PANELS ────────────────────────────────────────────────────────
+function remarkCol(tab){
+  return{l:'Remarks',k:'__remark',w:'18%',r:(v,row)=>{
+    const existing=getRemark(tab,row);
+    const id='rm-'+Math.random().toString(36).slice(2,8);
+    setTimeout(()=>{
+      const inp=document.getElementById(id);
+      if(inp){
+        inp.value=existing;
+        if(existing)inp.classList.add('has-remark');
+        inp.addEventListener('blur',()=>saveRemarkFromInput(tab,row,inp));
+        inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveRemarkFromInput(tab,row,inp);inp.blur();}});
+      }
+    },50);
+    return`<div class="remark-cell"><input id="${id}" class="remark-inp" placeholder="Add note..." title="Press Enter to save"></div>`;
+  }};
+}
+
+function pLeases(c,rows,prev){
+  const today=new Date();
+  const active=rows.filter(r=>r.Status==='Active');
+  const future=rows.filter(r=>r.Status==='Future');
+  const exp90=active.filter(r=>{const e=r['End date']?new Date(r['End date']):null;if(!e)return false;return(e-today)/86400000<=90&&(e-today)/86400000>=0;});
+  const totalRent=active.reduce((s,r)=>s+(parseFloat(r.Rent)||0),0);
+  const cols=[
+    {l:'Tenant',k:'Tenants',w:'22%'},{l:'Unit',k:'Unit',w:'20%'},
+    {l:'Rent',k:'Rent',w:'8%',r:v=>v?'$'+parseFloat(v).toFixed(0):'—'},
+    {l:'End date',k:'End date',w:'12%',r:(v,r)=>{if(!v)return'—';const d=new Date(v),diff=(d-new Date())/86400000;return`<span class="${diff<30?'danger':diff<60?'warn':'ok'}">${v}</span>`;}},
+    {l:'Type',k:'Type',w:'9%',r:v=>bd(v==='AtWill'?'amber':v==='Fixed'?'blue':'gray',v)},
+    {l:'Status',k:'Status',w:'9%',r:v=>bd(v==='Active'?'green':v==='Future'?'blue':'gray',v)},
+    remarkCol('leases'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Account number')+
+    (exp90.length?secH('Expiring within 90 days',exp90.length,tbl(exp90,cols,'l-exp',leaseD),'alert'):'')+ 
+    (future.length?secH('Future leases',future.length,tbl(future,cols,'l-fut',leaseD)):'')+ 
+    secH('All active leases',active.length,tbl(active,cols,'l-all',leaseD))+
+    `<div class="totals-row"><span>Active: <strong>${active.length}</strong></span><span>Rent roll: <strong>$${Math.round(totalRent).toLocaleString()}</strong></span></div>`;
+}
+function leaseD(r){show('Lease','Lease — '+r.Unit,`
+  ${df('Account #',r['Account number'])}${df('Tenant(s)',r.Tenants)}${df('Unit',r.Unit)}
+  ${df('Status',bd(r.Status==='Active'?'green':r.Status==='Future'?'blue':'gray',r.Status))}
+  ${df('Type',bd(r.Type==='AtWill'?'amber':'blue',r.Type))}
+  ${df('Rent','$'+parseFloat(r.Rent||0).toFixed(2))}
+  ${df('Start',r['Start date'])}${df('End',r['End date'])}
+  ${drawerRemark('leases',r)}
+`);}
+
+function pVac(c,rows,prev){
+  const unlisted=rows.filter(r=>r['Listed date']==='Unlisted');
+  const listed=rows.filter(r=>r['Listed date']&&r['Listed date']!=='Unlisted');
+  const cols=[
+    {l:'Property',k:'Property',w:'30%'},{l:'Unit',k:'Unit',w:'10%'},
+    {l:'Available',k:'Available date',w:'12%',r:v=>v||bd('amber','Not set')},
+    {l:'Rent',k:'Listing rent',w:'10%',r:v=>v?'$'+v:bd('amber','Not set')},
+    {l:'Bed',k:'Bed',w:'6%',r:v=>v||'—'},{l:'Bath',k:'Bath',w:'6%',r:v=>v||'—'},
+    {l:'Status',k:'Listed date',w:'8%',r:v=>bd(v==='Unlisted'?'amber':'green',v||'Unlisted')},
+    remarkCol('vacancies'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Unit')+
+    secH('Unlisted — not yet marketed',unlisted.length,tbl(unlisted,cols,'v-u',vacD),'alert')+
+    (listed.length?secH('Listed units',listed.length,tbl(listed,cols,'v-l',vacD)):'');
+}
+function vacD(r){show('Vacancy',r.Property,`
+  ${df('Property',r.Property)}${df('Unit',r.Unit)}
+  ${df('Status',bd(r['Listed date']==='Unlisted'?'amber':'green',r['Listed date']||'Unlisted'))}
+  ${df('Available',r['Available date']||'Not set')}
+  ${df('Listing rent',r['Listing rent']?'$'+r['Listing rent']:'Not set')}
+  ${df('Bed',r.Bed||'—')}${df('Bath',r.Bath||'—')}
+  <hr class="dv"><div class="df"><div class="df-l">Action needed</div><div class="df-v alert">Set available date and listing price, then publish to HAR.</div></div>
+  ${drawerRemark('vacancies',r)}
+`);}
+
+function pMoveIn(c,rows,prev){
+  const today=new Date();
+  const soon=rows.filter(r=>{const d=r['Lease start date']?new Date(r['Lease start date']):null;if(!d)return false;const diff=(d-today)/86400000;return diff>=0&&diff<=14;});
+  const cols=[
+    {l:'Property',k:'Property',w:'26%'},{l:'Unit',k:'Unit',w:'10%'},
+    {l:'Tenants',k:'Tenants',w:'22%'},
+    {l:'Move-in',k:'Lease start date',w:'12%'},{l:'End',k:'Lease end date',w:'12%'},
+    {l:'Status',k:'Lease status',w:'10%',r:v=>bd(v==='Activated'?'green':'blue',v||'—')},
+    remarkCol('movein'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Unit')+
+    (soon.length?secH('Moving in within 14 days',soon.length,tbl(soon,cols,'mi-s',miD),'warn'):'')+ 
+    secH('All upcoming move-ins',rows.length,tbl(rows,cols,'mi-a',miD));
+}
+function miD(r){show('Move In',(r.Property||r.Tenants||'').split(',')[0],`
+  ${df('Property',r.Property)}${df('Unit',r.Unit)}${df('Tenants',r.Tenants)}
+  ${df('Lease start',r['Lease start date'])}${df('End',r['Lease end date'])}
+  ${df('Status',bd(r['Lease status']==='Activated'?'green':'blue',r['Lease status']||'—'))}
+  ${r.Comments?`<hr class="dv">${df('Comments',r.Comments,'note')}`:''}
+  <hr class="dv"><div class="df"><div class="df-l">Move-in checklist</div><div class="nstack">
+    <div class="ni teal">Lease signed and uploaded to BD</div><div class="ni teal">SD and first month rent received</div>
+    <div class="ni teal">I/C form sent and received</div><div class="ni teal">Re-key, A/C, pest control scheduled</div>
+    <div class="ni teal">Utilities transferred to tenant</div><div class="ni teal">Agent CDA processed</div>
+  </div></div>
+  ${drawerRemark('movein',r)}
+`);}
+
+function pMoveOut(c,rows,prev){
+  const urgent=rows.filter(r=>parseFloat(r['Days left'])<=30);
+  const cols=[
+    {l:'Days',k:'Days left',w:'7%',r:v=>{const n=parseFloat(v);return`<span class="${n<=14?'danger':n<=30?'warn':'ok'}">${v}d</span>`;}},
+    {l:'Property',k:'Property',w:'24%'},{l:'Unit',k:'Unit',w:'7%'},
+    {l:'Tenants',k:'Tenants',w:'20%'},{l:'Move-out',k:'Move out date',w:'11%'},
+    {l:'Status',k:'Status',w:'10%',r:v=>bd(v==='Notice given'?'amber':'gray',v||'—')},
+    remarkCol('moveout'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Unit')+
+    (urgent.length?secH('Urgent — 30 days or less',urgent.length,tbl(urgent,cols,'mo-u',moD),'alert'):'')+ 
+    secH('All scheduled move-outs',rows.length,tbl(rows,cols,'mo-a',moD));
+}
+function moD(r){const n=parseFloat(r['Days left']);show('Move Out',r.Property,`
+  ${df('Tenants',r.Tenants)}${df('Unit',r.Unit)}
+  ${df('Days remaining',`<span class="${n<=14?'danger':n<=30?'warn':'ok'}" style="font-size:18px;font-weight:700">${r['Days left']} days</span>`)}
+  ${df('Move-out date',r['Move out date'])}${df('Notice given',r['Notice given date']||'—')}
+  ${df('Status',bd(r.Status==='Notice given'?'amber':'gray',r.Status||'—'))}
+  ${r.Comments?`<hr class="dv">${df('Comments',r.Comments,'note')}`:''}
+  <hr class="dv"><div class="df"><div class="df-l">Checklist</div><div class="nstack">
+    <div class="ni ${n<=14?'red':''}">Schedule move-out inspection</div>
+    <div class="ni">Calculate SD deductions</div><div class="ni">Update BD move-out status</div>
+    <div class="ni">Transfer utilities to PPM</div><div class="ni">List unit immediately</div>
+  </div></div>
+  ${drawerRemark('moveout',r)}
+`);}
+
+function pBal(c,rows,prev){
+  const over90r=rows.filter(r=>parseFloat(r['90+ days'])>0);
+  const withEviction=rows.filter(r=>r['Eviction date (if applicable)']);
+  const total=rows.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0);
+  const over90Total=rows.reduce((s,r)=>s+(parseFloat(r['90+ days'])||0),0);
+  const cols=[
+    {l:'Tenant',k:'Tenants',w:'18%'},{l:'Unit',k:'Unit',w:'18%'},
+    {l:'0-30d',k:'0 - 30 days',w:'8%',r:v=>v&&parseFloat(v)?`<span class="warn">$${parseFloat(v).toLocaleString()}</span>`:'—'},
+    {l:'30-60d',k:'30 - 60 days',w:'8%',r:v=>v&&parseFloat(v)?`<span class="warn">$${parseFloat(v).toLocaleString()}</span>`:'—'},
+    {l:'60-90d',k:'60 - 90 days',w:'8%',r:v=>v&&parseFloat(v)?`<span class="danger">$${parseFloat(v).toLocaleString()}</span>`:'—'},
+    {l:'90+ days',k:'90+ days',w:'8%',r:v=>v&&parseFloat(v)?`<span class="danger">$${parseFloat(v).toLocaleString()}</span>`:'—'},
+    {l:'Total',k:'Balance',w:'8%',r:v=>`<strong>$${parseFloat(v||0).toLocaleString()}</strong>`},
+    {l:'Eviction',k:'Eviction date (if applicable)',w:'8%',r:v=>v?bd('red',v):bd('gray','None')},
+    remarkCol('balances'),
+  ];
+  c.innerHTML=`<div class="sec"><div class="sec-head alert"><span class="sec-title">Total outstanding</span><span style="font-size:16px;font-weight:800;color:var(--red)">$${Math.round(total).toLocaleString()}</span></div><div class="totals-row"><span>90+ days: <strong style="color:var(--red)">$${Math.round(over90Total).toLocaleString()}</strong></span><span>Evictions: <strong>${withEviction.length}</strong></span><span>Tenants with balance: <strong>${rows.length}</strong></span></div></div>`+
+    wcBar(rows,prev,'Account number')+
+    (withEviction.length?secH('Eviction filed',withEviction.length,tbl(withEviction,cols,'b-ev',balD),'alert'):'')+ 
+    (over90r.length?secH('90+ days — escalate now',over90r.length,tbl(over90r,cols,'b-90',balD),'alert'):'')+ 
+    secH('All outstanding balances',rows.length,tbl(rows,cols,'b-all',balD));
+}
+function balD(r){const t=parseFloat(r.Balance||0);show('Collections',r.Tenants||r.Unit,`
+  ${df('Account #',r['Account number'])}${df('Tenants',r.Tenants)}${df('Unit',r.Unit)}
+  ${df('Eviction',r['Eviction date (if applicable)']?bd('red',r['Eviction date (if applicable)']):bd('gray','None'))}
+  <hr class="dv">
+  ${df('0-30 days','$'+(parseFloat(r['0 - 30 days'])||0).toLocaleString())}
+  ${df('30-60 days','$'+(parseFloat(r['30 - 60 days'])||0).toLocaleString())}
+  ${df('60-90 days','<span class="danger">$'+(parseFloat(r['60 - 90 days'])||0).toLocaleString()+'</span>')}
+  ${df('90+ days','<span class="danger">$'+(parseFloat(r['90+ days'])||0).toLocaleString()+'</span>')}
+  <hr class="dv">
+  ${df('Total','<strong style="font-size:18px;color:var(--red)">$'+t.toLocaleString()+'</strong>')}
+  <hr class="dv"><div class="df"><div class="df-l">Action</div><div class="nstack">
+    ${parseFloat(r['90+ days'])>0?'<div class="ni red">90+ days — file eviction or escalate to attorney</div>':''}
+    ${parseFloat(r['60 - 90 days'])>0?'<div class="ni red">60-90 days — send formal demand notice today</div>':''}
+    <div class="ni teal">Confirm ledger up to date in Buildium</div>
+  </div></div>
+  ${drawerRemark('balances',r)}
+`);}
+
+function pTasks(c,rows,prev){
+  const today=new Date();
+  const overdue=rows.filter(r=>r.Status!=='Completed'&&r['Due date']&&new Date(r['Due date'])<today);
+  const noVendor=rows.filter(r=>!r.Vendors||!r.Vendors.trim());
+  const inprog=rows.filter(r=>r.Status==='In Progress');
+  const done=rows.filter(r=>r.Status==='Completed');
+  const totalAmt=rows.reduce((s,r)=>s+(parseFloat(r.Amount)||0),0);
+  const cols=[
+    {l:'Task',k:'Short description',w:'24%'},{l:'Property',k:'Property',w:'18%'},
+    {l:'Status',k:'Status',w:'9%',r:v=>bd(v==='Completed'?'green':v==='In Progress'?'amber':'blue',v||'New')},
+    {l:'Vendor',k:'Vendors',w:'12%',r:v=>v||bd('red','None')},
+    {l:'Amount',k:'Amount',w:'8%',r:v=>v?'$'+parseFloat(v).toFixed(2):'—'},
+    {l:'Due',k:'Due date',w:'9%',r:(v,r)=>{if(!v)return'—';const d=new Date(v);return r.Status!=='Completed'&&d<today?`<span class="danger">${v.split(' ')[0]}</span>`:v.split(' ')[0];}},
+    remarkCol('tasks'),
+  ];
+  c.innerHTML=`<div class="sec"><div class="sec-head"><span class="sec-title">Work order summary</span></div><div class="totals-row"><span>Total: <strong>${rows.length}</strong></span><span>Done: <strong>${done.length}</strong></span><span>In progress: <strong>${inprog.length}</strong></span><span>Overdue: <strong style="color:var(--red)">${overdue.length}</strong></span><span>Spend: <strong>$${Math.round(totalAmt).toLocaleString()}</strong></span></div></div>`+
+    wcBar(rows,prev,'TaskId')+
+    (overdue.length?secH('Overdue — past due',overdue.length,tbl(overdue,cols,'t-od',taskD),'alert'):'')+ 
+    (noVendor.length?secH('New — no vendor yet',noVendor.length,tbl(noVendor,cols,'t-nv',taskD),'warn'):'')+ 
+    secH('In progress',inprog.length,tbl(inprog,cols,'t-ip',taskD))+
+    secH('All work orders',rows.length,tbl(rows,cols,'t-all',taskD));
+}
+function taskD(r){show('Work Order',r['Short description'],`
+  ${df('Task ID',r.TaskId)}${df('Property',r.Property+(r.Unit?' — '+r.Unit:''))}
+  ${df('Status',bd(r.Status==='Completed'?'green':r.Status==='In Progress'?'amber':'blue',r.Status||'New'))}
+  ${df('Category',r.Category)}${df('Vendor',r.Vendors||bd('red','Not assigned'))}
+  ${df('Amount',r.Amount?'$'+parseFloat(r.Amount).toFixed(2):'Not set')}
+  ${df('Created',r['Creation date']?r['Creation date'].split(' ')[0]:'—')}
+  ${df('Due',r['Due date']?r['Due date'].split(' ')[0]:'Not set')}
+  ${r['Latest comments']?`<hr class="dv">${df('Comments',r['Latest comments'],'note')}`:''}
+  ${drawerRemark('tasks',r)}
+`);}
+
+function pTenants(c,rows,prev){
+  const pets=rows.filter(r=>r['Number of pets']&&parseInt(r['Number of pets'])>0);
+  const cols=[
+    {l:'Name',k:'First name',w:'14%',r:(v,r)=>v+' '+r['Last name']},
+    {l:'Property',k:'Property name',w:'24%'},{l:'Unit',k:'Unit number',w:'6%'},
+    {l:'Rent',k:'Rent/Fee',w:'7%',r:v=>v?'$'+parseFloat(v).toFixed(0):'—'},
+    {l:'Start',k:'Start date',w:'9%'},{l:'End',k:'End date',w:'9%'},
+    {l:'Status',k:'Status',w:'7%',r:v=>bd(v==='Tenant'?'green':'gray',v||'—')},
+    {l:'Pets',k:'Number of pets',w:'6%',r:v=>v&&parseInt(v)?bd('purple',v+'🐾'):'—'},
+    remarkCol('tenants'),
+  ];
+  c.innerHTML=wcBar(rows,prev,'Id')+
+    (pets.length?secH('Tenants with pets',pets.length,tbl(pets,cols,'ten-p',tenD)):'')+ 
+    secH('All tenants',rows.length,tbl(rows,cols,'ten-a',tenD));
+}
+function tenD(r){show('Tenant',r['First name']+' '+r['Last name'],`
+  ${df('Property',r['Property name'])}${df('Unit',r['Unit number'])}
+  ${df('Lease start',r['Start date'])}${df('End',r['End date'])}
+  ${df('Rent','$'+parseFloat(r['Rent/Fee']||0).toFixed(2)+' '+r['Rent cycle'])}
+  ${df('Pets',r['Number of pets']?r['Number of pets']+' pet(s)':'None')}
+  <hr class="dv">
+  ${df('Email',r['Login email']||r['Alternate email']||'—')}
+  ${df('Mobile',r.Mobile||'—')}
+  ${df('Emergency',r['Emergency name']?r['Emergency name']+' '+r['Emergency phone']:'—')}
+  ${r.Comment?`<hr class="dv">${df('Comment',r.Comment,'note')}`:''}
+  ${drawerRemark('tenants',r)}
+`);}
+
+function pProps(c,rows,prev){
+  const cols=[
+    {l:'Property',k:'Property name',w:'28%'},{l:'City',k:'City/Locality',w:'12%'},
+    {l:'State',k:'State/Province',w:'7%'},{l:'Type',k:'Building type',w:'13%'},
+    {l:'Owners',k:'Rental owners',w:'22%'},{l:'Bank',k:'Operating bank account',w:'12%'},
+    remarkCol('properties'),
+  ];
+  c.innerHTML=secH('All properties',rows.length,tbl(rows,cols,'pr-a',propD));
+}
+function propD(r){show('Property',r['Property name'],`
+  ${df('Address',[r['Address 1'],r['City/Locality'],r['State/Province'],r['Postal code']].filter(Boolean).join(', '))}
+  ${df('Type',r['Building type'])}${df('Owners',r['Rental owners']||'—')}
+  ${df('Bank',r['Operating bank account']||'—')}
+  ${drawerRemark('properties',r)}
+`);}
+
+function pOwners(c,rows,prev){
+  const cols=[
+    {l:'Name',k:'Name',w:'18%'},{l:'Property',k:'Property name',w:'26%'},
+    {l:'Email',k:'Login email',w:'18%'},{l:'Mobile',k:'Mobile',w:'11%'},
+    {l:'1099',k:'Eligible for 1099 (optional)',w:'7%',r:v=>bd(v==='Yes'?'green':'gray',v||'—')},
+    remarkCol('owners'),
+  ];
+  c.innerHTML=secH('All rental owners',rows.length,tbl(rows,cols,'ow-a',ownerD));
+}
+function ownerD(r){show('Owner',r.Name||r['First name']+' '+r['Last name'],`
+  ${df('Property',r['Property name'])}${df('Role',r.Role||'Rental Owner')}
+  ${df('Ownership',r['Ownership Percentage'])}
+  <hr class="dv">
+  ${df('Email',r['Login email']||'—')}${df('Mobile',r.Mobile||'—')}
+  ${df('1099',bd(r['Eligible for 1099 (optional)']?'green':'gray',r['Eligible for 1099 (optional)']||'—'))}
+  ${drawerRemark('owners',r)}
+`);}
+
+function pApps(c,rows,prev){
+  const cols=[
+    {l:'Name',k:'ApplicantName',w:'22%'},{l:'Property/Unit',k:'PropertyUnit',w:'26%'},
+    {l:'Status',k:'Status',w:'12%',r:v=>bd(v==='Approved'?'green':v==='Pending'?'amber':'red',v||'—')},
+    {l:'Email',k:'Email',w:'18%'},{l:'Mobile',k:'MobilePhone',w:'12%'},
+    {l:'Applied',k:'ApplicationReceivedDateTime',w:'10%',r:v=>v?v.split(' ')[0]:'—'},
+  ];
+  c.innerHTML=secH('All applicants',rows.length,tbl(rows,cols,'ap-a',appD));
+}
+function appD(r){show('Applicant',r.ApplicantName,`
+  ${df('Application #',r.ApplicationNumber||r.Id)}
+  ${df('Status',bd(r.Status==='Approved'?'green':r.Status==='Pending'?'amber':'red',r.Status||'—'))}
+  ${df('Property',r.PropertyUnit||'Not assigned')}
+  <hr class="dv">
+  ${df('Email',r.Email||'—')}${df('Mobile',r.MobilePhone||'—')}
+  ${df('Applied',r.ApplicationReceivedDateTime||'—')}
+`);}
+
+// ── DRAWER REMARK ─────────────────────────────────────────────────
+function drawerRemark(tab,row){
+  const existing=getRemark(tab,row);
+  const id='dr-'+Math.random().toString(36).slice(2,8);
+  setTimeout(()=>{
+    const ta=document.getElementById(id);
+    if(ta){
+      ta.value=existing;
+      ta._tab=tab;ta._row=row;
+    }
+  },50);
+  return`<hr class="dv"><div class="df"><div class="df-l">Team remark</div>
+    <div class="drawer-remark-area">
+      <textarea id="${id}" placeholder="Add a note about this record — it will be saved to the weekly backup and carried forward to next week..."></textarea>
+      <button class="drawer-remark-save" onclick="saveDrawerRemark('${id}')">Save remark</button>
+    </div></div>`;
+}
+
+function saveDrawerRemark(id){
+  const ta=document.getElementById(id);
+  if(!ta)return;
+  setRemark(ta._tab,ta._row,ta.value);
+  renderSummary();
+  toast('Remark saved');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function tbl(rows,cols,id,onRowClick){
+  if(!rows.length)return'<div class="empty"><div class="empty-icon">📋</div><h3>No records</h3></div>';
+  _rows[id]={rows,onRowClick};
+  const th='<thead><tr>'+cols.map(c=>`<th style="width:${c.w||'auto'}">${c.l}</th>`).join('')+'<th style="width:28px"></th></tr></thead>';
+  const tb='<tbody id="tb-'+id+'">'+rows.map((r,i)=>
+    `<tr class="cr" onclick="if(event.target.tagName!=='INPUT'&&event.target.tagName!=='TEXTAREA')_c('${id}',${i})">`+
+    cols.map(col=>{let v=r[col.k]||'';if(col.r)v=col.r(v,r);return`<td>${v}</td>`;}).join('')+
+    `<td class="arr">›</td></tr>`
+  ).join('')+'</tbody>';
+  const fbar=`<div class="fbar"><span class="fbar-icon">⌕</span><input class="finp" placeholder="Filter records..." oninput="filt('tb-${id}',this.value)"></div>`;
+  return fbar+'<div class="tbl-wrap"><table>'+th+tb+'</table></div>';
+}
+
+function _c(id,i){const d=_rows[id];if(d&&d.rows[i]&&d.onRowClick)d.onRowClick(d.rows[i]);}
+function filt(id,q){const tb=document.getElementById(id);if(!tb)return;const lq=q.toLowerCase();tb.querySelectorAll('tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(lq)?'':'none';});}
+
+function secH(title,count,content,type=''){
+  return`<div class="sec"><div class="sec-head${type?' '+type:''}"><span class="sec-title">${title}</span><span class="sec-count">${count}</span></div>${content}</div>`;
+}
+
+function wcBar(rows,prev,key){
+  if(!prev||!prev.length)return'';
+  const pi=new Set(prev.map(r=>r[key]));
+  const ci=new Set(rows.map(r=>r[key]));
+  const nw=rows.filter(r=>!pi.has(r[key])).length;
+  const rm=prev.filter(r=>!ci.has(r[key])).length;
+  return`<div class="sec" style="margin-bottom:12px"><div class="wc"><span class="wc-label">Week-over-week</span><span class="wc-pill">+${nw} new</span><span class="wc-pill warn">${rm} removed</span><span class="wc-pill">${rows.length} total</span></div></div>`;
+}
+
+function bd(type,text){const m={green:'b-green',amber:'b-amber',red:'b-red',blue:'b-blue',purple:'b-purple',gray:'b-gray',navy:'b-navy',teal:'b-teal'};return`<span class="b ${m[type]||'b-gray'}">${text}</span>`;}
+function df(label,value,cls){if(!value||value==='undefined'||value==='')return'';return`<div class="df"><div class="df-l">${label}</div><div class="df-v ${cls||''}">${value}</div></div>`;}
+function show(tag,title,body){document.getElementById('dTag').textContent=tag;document.getElementById('dTitle').textContent=title;document.getElementById('dBody').innerHTML=body;document.getElementById('ov').classList.add('open');document.getElementById('drawer').classList.add('open');}
+function closeDrawer(){document.getElementById('ov').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+init();
+</script>
+</body>
+</html>
